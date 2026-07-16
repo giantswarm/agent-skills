@@ -1,3 +1,8 @@
+---
+name: postmortems
+description: Use this skill to write blameless postmortems after an incident — building a timestamped timeline, identifying root cause and contributing factors, and producing specific, owned, tracked action items.
+---
+
 # Postmortems
 
 A postmortem is the written record of an incident: what happened, why, and what
@@ -5,6 +10,9 @@ will change so it does not happen the same way again. Postmortems are
 **blameless** — they explain outcomes through systems and conditions, never
 through individual fault. That is what makes people comfortable being honest,
 which is what makes the analysis useful.
+
+Use this skill after an incident is resolved (the live-response side is covered
+by the **`incident-response`** skill).
 
 ## When to write one
 

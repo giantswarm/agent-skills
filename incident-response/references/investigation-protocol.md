@@ -1,4 +1,4 @@
-# Incident response
+# Investigation protocol
 
 A structured, read-only-first protocol for investigating a live incident on a
 Kubernetes-based platform. The goal is to understand and mitigate impact
