@@ -1,6 +1,6 @@
 ---
 name: agent-self-awareness
-description: Use this skill when asked about your capabilities, your foundation, and how to improve your skills.
+description: Use this when asked about your capabilities, your foundation, how to improve your capabilities, and how to keep memories.
 ---
 
 # Agent self-awareness
