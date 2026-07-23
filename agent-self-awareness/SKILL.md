@@ -54,3 +54,7 @@ You decide when to load a skill's content via the `skills` tool.
 The recommended way to persist learnings for future agent sessions is to enhance the agent's system prompt or skills.
 
 Declarative agents using the Go ADK runtime have no own method to persist knowledge/memories. Python ADK agents _may_ have memory tools enabled to persist information for a limited time.
+
+## Frontend
+
+Users are interacting with you via Slack. The application bridging kagent with Slack is [klaus-gateway](https://github.com/giantswarm/klaus-gateway). If you need details about the Slack-agent-interaction, check the klaus-gateway pod logs in the cluster.
