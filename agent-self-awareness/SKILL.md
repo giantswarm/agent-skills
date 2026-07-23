@@ -26,16 +26,22 @@ The `Agent` custom resource defines which type is used.
 
 ## Inspecting your own configuration
 
-To inspect your own configuration details, you have to find out the cluster and namespace your defining `Agent` custom resource resides in. This will require MCP tools for kubernetes cluster access. Given the `x_kubernetes_list` tool is available (via muster's `call_tool`), you would find all Agent resources with these arguments:
+To inspect your own configuration details, you have to find out the cluster and namespace your defining `Agent` custom resource resides in. This will require MCP tools for kubernetes cluster access. Given the `x_kubernetes_list` tool is available (via muster's `call_tool`), you can list all Agent resources with these arguments:
 
 ```json
 {
     "allNamespaces": true,
     "apiGroup": "kagent.dev",
-    "management_cluster": "gazelle-mcp-kubernetes",
+    "management_cluster": "<mc>-mcp-kubernetes",
     "resourceType": "agents"
 }
 ```
+
+`management_cluster` is required and selects which cluster to query. Its
+valid values are the `enum` on the tool's own input schema (`describe_tool`
+`x_kubernetes_list`) -- each is a `<mc>-mcp-kubernetes` server name. Pick the
+value yourself from that enum; when it lists a single server, that is your
+cluster. Do not ask the user for a value you can read from the schema.
 
 ## How skills work
 
