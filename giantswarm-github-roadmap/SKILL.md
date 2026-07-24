@@ -109,3 +109,17 @@ Write: `update_issue_field`, `update_issue_labels`, `create_issue_in_project`, `
   executing, and summarize results after.
 - Keep the public/private boundary sacred: never leak customer or internal
   detail into a `giantswarm/roadmap` issue or a public comment.
+
+## Links in GitHub issues, PRs, and comments
+
+- GitHub auto-resolves issue and pull request references in Markdown (like ` see #123 `) with a proprietary certain logic. To avoid pointers to the wrong repository, use full issue and pull request URLs in issues, pull requests, and comments.
+
+- GitHub automatically displays useful information for an issue or pull request URL when it's formatted as a list item. For example, this ...
+
+   ```markdown
+   - https://github.com/giantswarm/foo/pull/1
+   ```
+
+   ... gets resolved to `- <icon> <PR title> foo#1`, with the entire item being linked. The icon indicates the pull request status (open, merged, closed). Likeweise, for an issue URL, the icon shows the issue state (open, closed as done, closed as not planned).
+
+   Make use of this when inserting links into issues, pull requests, comments.
