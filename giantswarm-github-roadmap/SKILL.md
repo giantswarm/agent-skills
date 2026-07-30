@@ -123,3 +123,8 @@ Write: `update_issue_field`, `update_issue_labels`, `create_issue_in_project`, `
    ... gets resolved to `- <icon> <PR title> foo#1`, with the entire item being linked. The icon indicates the pull request status (open, merged, closed). Likeweise, for an issue URL, the icon shows the issue state (open, closed as done, closed as not planned).
 
    Make use of this when inserting links into issues, pull requests, comments.
+
+## Images in issues, pull requests, comments
+
+GitHub provides no programmatic way to upload an image for use in an issue, pull request, or comment.
+Only users can do this via the GitHub web UI.
