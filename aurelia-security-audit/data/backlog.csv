@@ -1,0 +1,13 @@
+issue_ref,title,team,reporter,status,priority,target,last_updated,audit_status,related_ruling,body_file
+EPIC-4412,Open the Payments API to three additional partner banks,Payments Platform,J. Vandermeer,In progress,High,Q4 2026,2026-08-28,NOT_AUDITED,,EPIC-4412-partner-api-expansion.md
+EPIC-4423,Add a /debug endpoint to the ingest service,Payments Platform,T. Halloran,In progress,Medium,Next sprint,2026-08-30,NOT_AUDITED,,EPIC-4423-ingest-debug-endpoint.md
+EPIC-4387,Move the customer ledger read replica to a managed cloud database,Core Banking,A. Brummer,In progress,High,Q4 2026,2026-08-26,NOT_AUDITED,,EPIC-4387-managed-ledger-replica.md
+EPIC-4401,Give the analytics group query access to the production data lake,Data Platform,R. Feldkamp,In review,High,Q4 2026,2026-08-29,NOT_AUDITED,,EPIC-4401-analytics-data-lake-access.md
+EPIC-4396,Enable full-fidelity tracing on the payments path,Observability,M. Sandoval,In progress,Medium,Q4 2026,2026-08-27,NOT_AUDITED,,EPIC-4396-full-fidelity-tracing.md
+EPIC-4370,Consolidate CI onto a shared runner pool for all teams,Developer Experience,K. Osei,In review,Medium,Q4 2026,2026-08-25,NOT_AUDITED,,EPIC-4370-shared-ci-runners.md
+EPIC-4431,Migrate to the new internal CA with 30-day certificate lifetimes,Platform Security,L. Achterberg,In progress,Medium,Q4 2026,2026-08-31,NOT_AUDITED,,EPIC-4431-internal-ca-migration.md
+EPIC-4402,Quarterly access recertification tooling,Platform Security,L. Achterberg,Done,Medium,Q3 2026,2026-08-14,AUDITED_PROCEED_WITH_CHANGES,RUL-2026-036,
+EPIC-4390,Customer ledger restore drill automation,Core Banking,A. Brummer,Done,High,Q3 2026,2026-08-01,AUDITED_PROCEED_WITH_CHANGES,RUL-2026-033,
+EPIC-4372,Monthly card reporting extract for finance,Payments Platform,J. Vandermeer,Done,High,Q3 2026,2026-07-11,AUDITED_PROCEED_WITH_CHANGES,RUL-2026-029,
+EPIC-4351,Cloud access key rotation for the data platform,Data Platform,R. Feldkamp,Blocked,High,Q3 2026,2026-06-26,AUDITED_BLOCKED,RUL-2026-023,
+EPIC-4318,Payments service structured logging rollout,Payments Platform,T. Halloran,Done,Medium,Q2 2026,2026-05-08,AUDITED_PROCEED_WITH_CHANGES,RUL-2026-018,
