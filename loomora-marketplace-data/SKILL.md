@@ -1,6 +1,6 @@
 ---
 name: loomora-marketplace-data
-description: This skill should be used for every question about Loomora marketplace performance, including "monthly overview", "how is [provider] performing", "prep the procurement discussion with [provider]", "why are returns up", "which products are underperforming", "provider league table", "stock-outs", "overstock", "days of cover", "OTIF", "return reasons", "contract renewal prep", or any request for provider, product, inventory, returns or delivery figures. Provides the marketplace dataset and the query tool that answer them.
+description: Loomora marketplace data covering sales, returns, inventory, supplier deliveries and reviews. Use for any question about provider or product performance, including monthly overviews and procurement prep.
 version: 0.1.0
 ---
 
