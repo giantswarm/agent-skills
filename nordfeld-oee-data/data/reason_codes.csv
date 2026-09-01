@@ -1,0 +1,18 @@
+reason_code,reason_description,big_loss,oee_factor,is_planned,counts_as_stop_time
+BRK-MECH,Mechanical breakdown,Equipment Failure,Availability,0,1
+BRK-ELEC,Electrical fault,Equipment Failure,Availability,0,1
+BRK-TOOL,Tooling failure,Equipment Failure,Availability,0,1
+BRK-HYD,Hydraulic fault,Equipment Failure,Availability,0,1
+STARVE,Material starvation,Equipment Failure,Availability,0,1
+BLOCK,Downstream blockage,Equipment Failure,Availability,0,1
+NO-OP,No operator available,Equipment Failure,Availability,0,1
+CHG-OVER,Changeover / setup,Setup and Adjustments,Availability,1,1
+ADJ-TOOL,Tooling adjustment,Setup and Adjustments,Availability,1,1
+PM-PLAN,Planned maintenance,Setup and Adjustments,Availability,1,1
+CLEAN,Cleaning,Setup and Adjustments,Availability,1,1
+QA-CHECK,In-process quality check,Setup and Adjustments,Availability,1,1
+JAM,Material jam,Idling and Minor Stops,Performance,0,0
+MISFEED,Misfeed,Idling and Minor Stops,Performance,0,0
+SENSOR,Sensor fault / reset,Idling and Minor Stops,Performance,0,0
+MINOR-ADJ,Minor operator adjustment,Idling and Minor Stops,Performance,0,0
+CHIP-CLR,Chip / swarf clearance,Idling and Minor Stops,Performance,0,0

@@ -1,0 +1,9 @@
+defect_code,defect_description,big_loss
+DIM-OOT,Dimension out of tolerance,Process Defects
+SURF,Surface finish defect,Process Defects
+BURR,Burr / edge condition,Process Defects
+WELD-POR,Weld porosity,Process Defects
+LEAK-FAIL,Leak test failure,Process Defects
+ASSY-MISS,Missing component,Process Defects
+SU-SETUP,First-off setup reject,Reduced Yield
+SU-WARM,Warm-up reject,Reduced Yield

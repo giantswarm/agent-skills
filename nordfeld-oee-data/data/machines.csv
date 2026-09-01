@@ -1,0 +1,15 @@
+machine_id,plant_id,machine_name,asset_type,process_step,ideal_cycle_time_sec,installed_year,is_bottleneck,target_oee
+PRESS-01,BRM,630t transfer press,Press,Blanking,4.2,1998,1,0.7
+PRESS-02,BRM,400t press,Press,Forming,3.1,2004,0,0.72
+PRESS-03,BRM,250t press,Press,Forming,2.4,2011,0,0.75
+WELD-01,BRM,Robot weld cell 1,Weld cell,Welding,18.5,2013,0,0.72
+WELD-02,BRM,Robot weld cell 2,Weld cell,Welding,18.5,2019,0,0.72
+CNC-01,STW,Machining centre 1,CNC,Machining,52.0,2016,0,0.75
+CNC-02,STW,Machining centre 2,CNC,Machining,52.0,2016,0,0.75
+CNC-03,STW,Machining centre 3,CNC,Machining,48.0,2018,0,0.75
+CNC-04,STW,Machining centre 4,CNC,Machining,48.0,2021,0,0.78
+GRIND-01,STW,Precision grinder,Grinder,Grinding,76.0,2009,1,0.7
+ASSY-01,VLD,Actuator assembly line 1,Assembly,Assembly,31.0,2005,0,0.68
+ASSY-02,VLD,Actuator assembly line 2,Assembly,Assembly,31.0,2007,1,0.68
+LEAK-01,VLD,Leak test station,Test,Test,22.0,2015,0,0.75
+PACK-01,VLD,Packing line,Packaging,Packing,9.5,2012,0,0.78

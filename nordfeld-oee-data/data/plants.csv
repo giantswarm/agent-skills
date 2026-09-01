@@ -1,0 +1,4 @@
+plant_id,plant_name,country,focus,opened_year,shift_pattern,saturday_shifts,changeover_excluded_from_planned_time
+BRM,Bramfeld,DE,Stamping and forming,1974,"A,B,C",A,0
+STW,Steinwald,DE,Machining,2016,"A,B,C",A,0
+VLD,Valdera,IT,Assembly and test,1998,"A,B",none,1
