@@ -1,7 +1,8 @@
 ---
 name: loomora-marketplace-data
 description: Loomora marketplace data covering sales, returns, inventory, supplier deliveries and reviews. Use for any question about provider or product performance, including monthly overviews and procurement prep.
-version: 0.1.0
+metadata:
+  version: "0.1.0"
 ---
 
 # Loomora marketplace data access
