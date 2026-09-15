@@ -10,10 +10,14 @@ here and pin it to a commit on the agent's release.
 
 | Skill | For |
 |---|---|
-| `agent-platform-overview` | What the platform is and how it is built: components, surfaces, identity, how an agent runs |
-| `agent-platform-tools` | Muster's meta-tools, toolsets and presets, MCP servers, workflows, missing or refused tools |
-| `agent-platform-agent-management` | Creating, changing, inspecting, troubleshooting and deleting agents through agent-manager, the portal or GitOps |
-| `agent-platform-skill-authoring` | Writing and reviewing skills like these |
+| `agent-platform-overview` | What the platform is and how it is built: components, surfaces, identity, how an agent runs, how to look at the live platform |
+| `agent-platform-tools` | How Muster works and how to find any tool: the meta-tools and the `call_tool` contract, toolsets evaluated per request, MCP servers, workflows, model-manager |
+| `agent-platform-agent-management` | Creating, changing, inspecting, troubleshooting and deleting agents through agent-manager, the portal or GitOps; status through the platform's workflows |
+| `agent-platform-skill-authoring` | Writing and reviewing skills to the fetch-live standard: format, loading, pins, review checklist |
+
+The four tell an agent how to *find* the current truth (the CRDs and releases through mcp-kubernetes, tool
+names and schemas through Muster, the platform's state through `workflow_*` tools) rather than carrying
+copies of it, and each owns one topic.
 
 The remaining directories are demo and domain skills (`incident-response`, `k8s-debugging`,
 `postmortems`, `agent-self-awareness`, and the fictional customers' data skills).

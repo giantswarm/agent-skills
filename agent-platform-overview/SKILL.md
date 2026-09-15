@@ -75,16 +75,15 @@ forward that person's identity. Agents hold no credential of their own on the to
 the person's token end to end. Muster shows each person only the tools of the servers they are signed
 in to, and each backend's own authorization — Kubernetes RBAC for mcp-kubernetes, a service's own
 accounts — decides what a call may do. The audit log names the person, and the platform records which
-agent acted for them. A toolset bounds what an agent's model can discover and call; it is composition,
-not authorization, and never widens what the person may reach.
+agent acted for them. What an agent's model may discover and call is bounded by its toolset, which never
+widens what the person may reach (the `agent-platform-tools` skill has the mechanics).
 
 ## How an agent is built and runs
 
-An agent is a Flux `HelmRelease` of the `agent` chart — created by the portal, by agent-manager or by a
-GitOps repository — that renders an `AgentTemplate` (prompt, model config, pinned skills, tool bindings)
-and, unless the agent is chat-only, a `RemoteMCPServer` pointing at Muster with the agent's toolset as
-a request header. The platform's `Harness` admits the template, boots it once on a worker, materialises
-the skills and takes a **golden snapshot**; the template reports `Ready`. Every conversation is an
+An agent is one Flux `HelmRelease` of the `agent` chart — the unit the `agent-platform-agent-management`
+skill creates and changes, rendered into the runtime's `AgentTemplate`. The platform's `Harness` admits the
+template, boots it once on a worker, materialises the skills and takes a **golden snapshot**; the template
+reports `Ready`. Every conversation is an
 `AgentInstance`: an actor restored from that snapshot onto a worker pod, running the turn in a sandbox,
 sending its tool calls to Muster with the person's forwarded token and the toolset header, checkpointed
 between turns. The transcript lives in the runtime's Postgres, the actor's memory in the snapshot.
