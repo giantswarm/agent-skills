@@ -2,14 +2,15 @@
 
 The prompt is the agent's role, voice and rules. Knowledge that is long, changes, or is shared
 between agents belongs in skills — the runtime injects every skill's name and description into the
-context and loads the body on demand, so the prompt stays short and the agent stays cheap.
+context and loads the body on demand, so the prompt stays short and the agent stays cheap. Keep it
+under a page; everything longer is a skill.
 
 ## The Muster meta-tool paragraph (every tooled agent)
 
-Agents on the Go ADK runtime see Muster's meta-tools as functions and everything behind them as
-names. A model that emits `x_kubernetes_list` as a function name gets `Tool 'x_kubernetes_list'
-not found`; on the Python runtime the same mistake ends the turn. Put this paragraph, or your own
-words for it, into every prompt of an agent with a toolset other than `preset:none`:
+Agents see Muster's meta-tools as functions and everything behind them as names. A model that
+emits `x_kubernetes_list` as a function name gets `Tool 'x_kubernetes_list' not found` and loses the
+turn. Put this paragraph, or your own words for it, into the prompt of every agent whose toolset is
+not `preset:none`:
 
 ```text
 Your MCP tools come from an aggregator, muster, via meta-tools: `filter_tools` discovers
@@ -29,12 +30,9 @@ Look for one first with `filter_tools(query="<the question's topic>")` and fall 
 raw tools only when no workflow fits.
 ```
 
-For agents that touch Kubernetes through the Infrastructure servers, add the contract that trips
-models most: `management_cluster` is required and its value is the full server name
-`<mc>-mcp-kubernetes` (the enum on the tool's schema), `x_kubernetes_list` selects with
-`resourceType` (not `kind`), pod logs take `podName` and `tailLines`; list cheaply with
-`summary: true` and `fieldSelector: status.phase!=Running`; a CrashLoopBackOff pod reports
-`Running`, catch it through events with `fieldSelector: reason=BackOff`.
+The argument shapes that trip models on the infrastructure tools (`management_cluster` above all)
+are the `agent-platform-tools` skill's topic; an agent that touches clusters should carry that
+skill rather than a copy of the contract in its prompt.
 
 ## A template
 
@@ -60,7 +58,5 @@ confirm choices you made for the person; that you act with the person's identity
   description, the prompt shapes the behaviour.
 - One voice, stated once. Contradictory instructions cost turns.
 - Name the skills the agent should load and when; the runtime lists them, but a nudge helps.
-- Writes only on explicit request, named target, one at a time; confirm what the agent chose
-  itself (names, toolsets, model). This is the line between a helpful operator and a surprise.
-- The agent acts as the person: it may say so when refusing or when a call is `forbidden`.
-- Keep the prompt under a page. Everything longer is a skill.
+- Writes only on explicit request, named target, one at a time; the agent acts as the person and
+  may say so when refusing or when a call is `forbidden`.
