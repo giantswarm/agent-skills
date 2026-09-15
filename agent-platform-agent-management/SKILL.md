@@ -64,8 +64,8 @@ head. A GitOps agent re-pins through a commit that changes the pinned commit.
   config never boots.
 - **Toolset**: the smallest that does the job; `preset:full` only on an explicit request. What the
   selectors are and how to see what a preset resolves to: the `agent-platform-tools` skill.
-- **Skills**: always pinned. A private skills repository works only through GitOps, with
-  `skillsGitAuthSecretRef` on the release; the portal and agent-manager pass no credential.
+- **Skills**: always pinned, and a private skills repository only through GitOps — what a pin is and
+  what the release needs for a private repository: the `agent-platform-skill-authoring` skill.
 - **System prompt**: role, voice and rules; knowledge goes into skills. Every agent with tools
   carries the meta-tool paragraph from `references/system-prompt.md`.
 - **Icon**: `iconUrl` is `https://avatars.<base domain>/v1/<name>.png` where the installation
