@@ -1,16 +1,18 @@
 ---
 name: agent-platform-skill-authoring
-description: Use when asked to write, review, fix or explain a skill for an agent on the Giant Swarm Agent Platform — the SKILL.md frontmatter (agentskills.io), the folder layout with references/, scripts/ and assets/, how a skill reaches an agent (a git commit or an OCI digest pinned on the agent's release), how the runtime loads it (load_skill, load_skill_resource, bash under /skills), and what in a skill breaks an agent's boot.
+description: Use when asked to write, review, fix or explain a skill for an agent on the Giant Swarm Agent Platform — the SKILL.md frontmatter (agentskills.io fields), the folder layout, how the runtime loads a skill (load_skill, load_skill_resource, /skills), what a pin is and why a new commit changes nothing until an agent is re-pinned, the writing rules (fetch live, never copy; one topic; short), what in a skill breaks an agent's boot, and how to review one.
 metadata:
-  version: "1.0.0"
+  version: "2.0.0"
 ---
 
 # Authoring skills
 
 A skill is a folder with a `SKILL.md` and optional resources, written to the agentskills.io
 specification (https://agentskills.io/specification). The platform's public skills live in
-https://github.com/giantswarm/agent-skills, one directory per skill at the repository root; a
-team's skills can live in any git repository or an OCI image.
+https://github.com/giantswarm/agent-skills, one directory per skill at the root; a team's skills
+can live in any git repository or an OCI image. This skill covers writing and reviewing skills;
+creating agents and re-pinning their skills is the `agent-platform-agent-management` skill, how
+Muster and its tools work is the `agent-platform-tools` skill.
 
 ## The format
 
@@ -21,94 +23,91 @@ description: Use when … (the trigger: when should the agent load this? — not
 metadata:
   version: "1.0.0"
 ---
-
-# Title
-
-Instructions, knowledge, rules. Tables for lookups. Point to references/ for depth.
 ```
 
-- **Frontmatter fields the runtime knows**: `name`, `description`, `license`, `compatibility`,
-  `metadata` (string → string), `allowed-tools`. Since kagent line `0.11.0-gs.11` other fields are
-  ignored; on an older line a field such as Claude Code's `user-invocable` or `argument-hint`
-  fails the whole agent's boot, so keep to the set above.
-- **`name`**: lowercase letters, digits and hyphens, ≤ 64 characters, equal to the directory name;
-  unique among the agent's skills (the agent's release may mount it under another `name`).
+- **Frontmatter**: the runtime reads `name`, `description`, `license`, `compatibility`, `metadata`
+  (string → string) and `allowed-tools`, nothing else. Current runtimes ignore other fields; older
+  ones fail the boot of every agent that mounts the skill on a field such as Claude Code's
+  `user-invocable` — stay within the six.
+- **`name`**: lowercase letters, digits and single hyphens, ≤ 64 characters, equal to the directory
+  name; unique among the agent's skills (a release may mount it under another `name`).
 - **`description`**: ≤ 1024 characters, written for the model: the situations that should make it
-  load the skill ("Use when asked to …"). This line and the name are all the agent sees until it
-  loads the skill — the trigger has to carry the decision.
-- **Body**: instructions, not prose about the topic. Under about 500 lines; longer goes into
-  `references/`.
-- **Folders**: `references/` (documentation the agent reads on demand), `scripts/` (run with the
-  runtime's `bash`), `assets/` (templates, data). Any layout under the skill directory works; the
-  three names are the convention the runtime's instructions mention.
+  load the skill. Name and description are all the agent sees until it loads the skill — the
+  trigger carries the decision.
+- **Body**: what the model would get wrong without it. Well under 150 lines.
+- **Folders**: `references/` (read on demand), `scripts/` (run with the runtime's `bash`) and
+  `assets/` (templates, data) are the convention; any layout under the skill directory works.
 
-## How the runtime uses a skill
+## How the runtime loads a skill
 
-Skills are materialised into the golden snapshot at `/skills/<name>` (read-only) when the agent
-compiles. At run time the Go ADK runtime:
+Skills are materialised read-only at `/skills/<name>` in the agent's golden snapshot when it
+compiles. The runtime puts every skill's `name` and `description` into the system prompt with the
+instruction to load a relevant skill before acting, and offers `list_skills`, `load_skill(name)`
+(the `SKILL.md` body) and `load_skill_resource(name, path)` (one file of the skill, e.g.
+`references/values.md`). `read_file`, `write_file`, `edit_file` and `bash` run in a per-session
+directory (`/tmp/kagent/<session>/` with `uploads/`, `outputs/` and a `skills` symlink); `bash`
+times out after 30 s, Python after 60 s; there is no network. So: the decision-making content
+goes into `SKILL.md`; a reference file is named there so the agent knows what to load; a script
+gets a one-line usage; nothing may depend on network access or on files outside `/skills` and the
+session directory.
 
-1. injects every skill's `name` and `description` into the system prompt with the instruction to
-   load a relevant skill before acting;
-2. offers `list_skills`, `load_skill(name)` (returns the `SKILL.md` body) and
-   `load_skill_resource(name, path)` (returns a file from the skill directory, e.g.
-   `references/architecture.md`);
-3. offers `read_file`, `write_file`, `edit_file` and `bash`, which run in a per-session directory
-   (`/tmp/kagent/<session>/`, with `uploads/`, `outputs/` and a `skills` symlink) — `bash` commands
-   time out after 30 s, Python after 60 s; a skill's Python modules are importable by skill name
-   (`importlib.import_module('skill-name.module')` when the name carries a hyphen).
+## What a pin is
 
-Consequences for authoring: put the decision-making content in `SKILL.md` and the long tables in
-`references/`, name the reference files in `SKILL.md` so the agent knows what to load; a script the
-agent should run gets a one-line usage in `SKILL.md`; nothing in a skill can depend on network
-access or on files outside `/skills` and the session directory.
-
-## How a skill reaches an agent
-
-The agent's release lists skills, each **pinned**: `{name, path, git: {url, commit}}` with a full
+An agent's release lists its skills **pinned**: `{name, path, git: {url, commit}}` with a full
 40- or 64-hex commit, or `{name, oci: <ref@sha256:…>}`. The chart refuses a branch, a tag, a short
-SHA or an OCI tag. The composers do the pinning: the portal's skills step and agent-manager's
-`create_agent`/`update_agent` resolve a `ref` to its head commit at write time (`list_skills` shows
-the head of every configured repository; `update_agent` with `refreshSkills: true` re-pins every git
-skill to its default-branch head). A GitOps release pins by hand. **A new commit of the skill
-repository changes nothing on any agent** until that agent is re-pinned — which is what makes an
-agent version reproducible.
+SHA or an OCI tag. **A new commit of a skill repository changes nothing on any agent** until that
+agent is re-pinned — that is what makes an agent version reproducible, and why a skill fix is not
+live when it merges. Pinning and re-pinning are the composers' job — the portal's skills step,
+agent-manager's write tools, a GitOps commit — and belong to the `agent-platform-agent-management`
+skill (the portal flow: https://docs.giantswarm.io/tutorials/agent-platform/create-an-agent/).
 
-Discovery: the portal and agent-manager list every `SKILL.md` of the configured repositories
-(`agentPlatform.skills.repositories` in the portal, the same list in agent-manager's
-`skillsRepositories`; `https://github.com/giantswarm/agent-skills` on Giant Swarm installations).
-A skill in another public repository is still usable — pass its `url` and `path` — it is only not
-offered in the wizard.
+The repositories an installation offers and each skill's head commit are live data: agent-manager's
+`get_info` and `list_skills` through `call_tool`. Any other public repository works by `url` and
+`path`; it is only not offered. A **private** repository needs a GitOps release with
+`skillsGitAuthSecretRef.name` (a Secret in the agent's namespace, key `token`) — the portal and
+agent-manager pass no credential, so a private skill chosen there never boots.
 
-Private repositories: the boot fetches with git; a GitOps release supplies one read token for all
-its private git skills (`skillsGitAuthSecretRef.name`, a Secret in the agent's namespace with key
-`token`, rendered as `credentialRef` on every git skill, offered on challenge only). The portal and
-agent-manager pass no credential yet, so a private skill chosen there leaves the agent at
-`Ready=False ActorTemplatePending` with `could not read Username for 'https://github.com'` in the
-golden worker's log.
+## Writing rules
 
-## Writing a good one
+1. **Fetch live, never copy.** Before every line ask: can the agent fetch this? If yes, write the
+   one-line recipe, not the content. Custom resources and `HelmRelease`s are read with
+   `x_kubernetes_*`; tool names, arguments and what a preset resolves to come from `filter_tools`
+   and `describe_tool`; the agent chart's values schema from agent-manager's `get_info` and
+   `validate_agent`; the state of an agent or the platform from a `workflow_<name>` (the
+   `agent-platform-tools` skill has the discovery recipe). Tables of tools, values, presets,
+   servers or failure modes go stale faster than you can think and cost context on every turn.
+2. **Trigger, not summary.** The description answers "when do I load this?"; the body says what the
+   model would get wrong without it — contracts, exact names, the order that matters, the rules of
+   conduct. Cut what it already knows.
+3. **One topic per skill, no overlap.** Several small skills load cheaper than one large one. Where
+   the reader needs a neighbouring topic, name the skill that owns it (`the agent-platform-tools
+   skill`) instead of explaining it again; a fact stated in two skills drifts.
+4. **Short.** `SKILL.md` well under 150 lines; a `references/` file only for a lookup recipe that is
+   genuinely long, named in `SKILL.md` with what it answers.
+5. **Declarative.** Outcomes and constraints, not numbered procedures — except where the order is
+   the point (validate before create; a workflow before raw tools).
+6. **Stable names.** A renamed skill or reference file breaks the agents that pin it at their next
+   re-pin; treat names as an interface.
+7. **Public content only** in a public repository: no customer names, no internal hostnames beyond
+   the platform's own, no credentials.
 
-- **Trigger, not summary.** The description answers "when do I load this?".
-- **Do not state the obvious.** Say what the model would get wrong without the skill: contracts,
-  exact names, gotchas, the order that matters. Cut what it already knows.
-- **Progressive disclosure.** Short `SKILL.md` with a table of which reference answers what;
-  depth in `references/`.
-- **Declarative.** Describe outcomes and constraints; leave tool order and mechanics to the agent,
-  except where a specific order is the point (the Muster `call_tool` contract).
-- **One skill, one topic.** Several small skills load cheaper than one large one; the agent loads
-  only what the question needs.
-- **Stable names.** Renaming a skill or a reference file breaks the agents pinned to it only when
-  they re-pin; still, treat names as an interface.
-- **Public content only** in a public repository: no customer names, no internal hostnames beyond
-  the platform's own, no credentials.
-- **Check the frontmatter** parses as YAML with `name` and `description` present; the runtime
-  reports a `SKILL.md` it cannot parse and the agent does not boot.
+## What breaks an agent's boot
 
-## Reviewing a skill: the checklist
+A `SKILL.md` that does not parse (frontmatter not YAML, `name` or `description` missing), an
+unknown frontmatter field on an older runtime, or a private repository without a credential: the
+golden snapshot never compiles and the agent stays at `Ready=False`. A pin the chart refuses fails
+the release before any boot. The evidence: `workflow_agent-status` and the
+`agent-platform-agent-management` skill.
 
-1. Frontmatter: only known fields; `name` = directory; description is a trigger under 1024 chars.
-2. Body loads in one read and tells the agent which reference to open for what.
-3. Every fact the agent must get exactly right (a name, an argument, a URL) is stated exactly once.
-4. Nothing requires network, a shell outside the session directory, or a tool the agent's toolset
-   does not include.
-5. Pin: the agent's release points at a commit that contains this version.
+## Reviewing a skill
+
+- Frontmatter: only the six fields; `name` = directory; the description is a trigger under 1024
+  characters. `python3 scripts/validate_skills.py` in `giantswarm/agent-skills` checks this and
+  runs on every pull request — run it before opening one.
+- Does any line state something the agent could fetch? Replace it with the recipe.
+- Does any section belong to another skill? Replace it with that skill's name.
+- The body loads in one read and names which reference answers what.
+- Every fact the agent must get exactly right (a name, an argument, a URL) is stated once.
+- Nothing requires network, a shell outside the session directory, or a tool the agent's toolset
+  does not include.
+- Pin: the agent's release points at a commit that contains this version.
