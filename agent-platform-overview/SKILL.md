@@ -129,8 +129,10 @@ schema). Both through `call_tool`, never as direct function calls.
   applies, `kubectl` reads back. GitOps-managed resources are read-only in the portal.
 - An agent without a toolset has **implicit full access** to whatever the person can reach — the
   behaviour before toolsets existed, made visible. `preset:none` means no tools at all.
-- Swarmgeist in Slack is the front door app, not an agent of its own; the default agent it hands a
-  message to is a platform setting. Slack guests cannot use it, and every participant must be
+- Swarmgeist in Slack is the front door app for every agent; the default agent it hands a bare
+  message to is a platform setting (`klausGateway.a2a.defaultAgent`) — on the Giant Swarm
+  installation the Swarmgeist agent itself, so a bare `@Swarmgeist` reaches the explainer and
+  `/agent "<name>"` any other agent. Slack guests cannot use it, and every participant must be
   signed in before anything is dispatched.
 - Machine identity for autonomous agents (no human behind them) is not supported yet; every turn
   has a person.
