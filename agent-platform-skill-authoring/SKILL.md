@@ -23,10 +23,6 @@ description: Use when … (the trigger: when should the agent load this? — not
 metadata:
   version: "1.0.0"
 ---
-
-# Title
-
-Rules, contracts, fetch recipes. Point to references/ only for a long lookup recipe.
 ```
 
 - **Frontmatter**: the runtime reads `name`, `description`, `license`, `compatibility`, `metadata`
@@ -39,9 +35,8 @@ Rules, contracts, fetch recipes. Point to references/ only for a long lookup rec
   load the skill. Name and description are all the agent sees until it loads the skill — the
   trigger carries the decision.
 - **Body**: what the model would get wrong without it. Well under 150 lines.
-- **Folders**: `references/` (read on demand), `scripts/` (run with the runtime's `bash`),
-  `assets/` (templates, data). Any layout under the skill directory works; these three are the
-  convention the runtime's instructions name.
+- **Folders**: `references/` (read on demand), `scripts/` (run with the runtime's `bash`) and
+  `assets/` (templates, data) are the convention; any layout under the skill directory works.
 
 ## How the runtime loads a skill
 
@@ -98,11 +93,11 @@ agent-manager pass no credential, so a private skill chosen there never boots.
 
 ## What breaks an agent's boot
 
-A `SKILL.md` the runtime cannot parse (frontmatter not YAML, `name` or `description` missing), an
-unknown frontmatter field on an older runtime, or a private repository the boot has no credential
-for: the golden snapshot never compiles and the agent stays at `Ready=False`. A pin the chart
-refuses fails the release before any boot. Where the evidence is and how to read it:
-`workflow_agent-status` and the `agent-platform-agent-management` skill.
+A `SKILL.md` that does not parse (frontmatter not YAML, `name` or `description` missing), an
+unknown frontmatter field on an older runtime, or a private repository without a credential: the
+golden snapshot never compiles and the agent stays at `Ready=False`. A pin the chart refuses fails
+the release before any boot. The evidence: `workflow_agent-status` and the
+`agent-platform-agent-management` skill.
 
 ## Reviewing a skill
 
