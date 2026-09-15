@@ -1,122 +1,126 @@
 ---
 name: agent-platform-tools
-description: Use when a question is about the tools agents use on the Giant Swarm Agent Platform — Muster's meta-tools (filter_tools, describe_tool, call_tool), toolsets and presets (read-only, none, full, infrastructure, agent-platform), the x_/core_/workflow_ tool names, MCP servers and their three groups, workflows and why they are cheaper, or why a tool is missing or a call was refused.
+description: Use when a question is about how tools work on the Giant Swarm Agent Platform — how Muster's meta-tools and call_tool work, how to find or run any tool, what a toolset or preset resolves to for the caller, why a tool is missing or a call was refused, MCP servers and their state, workflows and why they are cheaper, or what model-manager can do. Carries the mechanics and the fetch recipes, never a list of tools, presets or servers — those are read live.
 metadata:
-  version: "1.0.0"
+  version: "2.0.0"
 ---
 
 # Tools on the Agent Platform
 
-Public pages: https://docs.giantswarm.io/overview/agent-platform/meta-tools/,
-https://docs.giantswarm.io/overview/agent-platform/toolsets/,
-https://docs.giantswarm.io/reference/muster/toolsets/, https://docs.giantswarm.io/reference/muster/meta-tools/.
-
-Depth in this skill's references:
-
-| Topic | Read |
-|---|---|
-| Defining presets for an installation: rule shapes, examples, rollout, verification | `references/toolset-presets.md` |
-| Writing a workflow: fields, output shaping, control flow, the design rules that keep it cheap | `references/workflows.md` |
-| `MCPServer` resources: transports, families, labels, auth modes, custom and third-party servers, states | `references/mcp-servers.md` |
+Docs: https://docs.giantswarm.io/overview/agent-platform/meta-tools/ (the concept),
+https://docs.giantswarm.io/reference/muster/meta-tools/ (every meta-tool's fields),
+https://docs.giantswarm.io/overview/agent-platform/toolsets/ and
+https://docs.giantswarm.io/reference/muster/toolsets/ (toolsets and the selector grammar). Defining
+presets, writing workflows and registering servers are tutorials, linked per section. What the platform
+is belongs to the `agent-platform-overview` skill; creating, changing and troubleshooting agents to
+`agent-platform-agent-management`.
 
 ## Muster is the only tool surface
 
-Every agent, IDE and portal session talks to one MCP endpoint, Muster, and sees **eleven
-meta-tools** — never the hundreds of tools behind them:
+Every agent, IDE and portal session talks to one MCP endpoint, Muster, and sees a small fixed set of
+**meta-tools** instead of the hundreds of tools behind it: `filter_tools`, `describe_tool` and `call_tool`
+for discovery and execution; `list_tools` and `list_core_tools` for whole listings (large — prefer
+`filter_tools`); and a list/describe/get trio each for MCP resources and prompts. The set you have is
+your own MCP tool list; the reference page documents each.
 
-| Meta-tool | Purpose |
-|---|---|
-| `filter_tools` | Discover cheaply: `pattern` (glob on names), `description_filter` (substring), `query` (natural language, BM25-ranked), `labels`; bounded page (`limit` default 5, `offset`, `total`, `truncated`), one-line `summary` per tool; `include_schema: true` for full schemas; `toolset` to resolve a toolset without the header; `include_presets: true` to list the presets |
-| `describe_tool` | The authoritative description and input schema of one tool |
-| `call_tool` | Run any tool by its exact `name` with an `arguments` object |
-| `list_tools` | Every tool of the caller's catalogue — large; prefer `filter_tools` |
-| `list_core_tools` | Muster's built-in `core_*` tools only |
-| `list_resources` / `describe_resource` / `get_resource` | MCP resources |
-| `list_prompts` / `describe_prompt` / `get_prompt` | MCP prompts |
+**The `call_tool` contract.** Every tool behind Muster runs as
+`call_tool {"name": "<exact name>", "arguments": {…}}` — the name is a string argument, never a function
+of its own. A model that emits `x_kubernetes_list` as a function name gets "tool not found": the Go
+runtime hands the error back for the next attempt, the Python runtime ends the turn. `describe_tool`'s
+`invocation` field repeats this for every tool. Arguments follow the tool's `inputSchema`, so read
+`describe_tool` before the first call of a tool you have not used.
 
-The discovery recipe: `filter_tools` to shortlist, `describe_tool` on the candidate, `call_tool` to
-run it. Look for a `workflow_*` first — a workflow answers a whole question in one call.
+**Name shapes.** `x_<server>_<tool>` is an external MCP server's tool, prefixed with the server's
+registered name; `core_<area>_<tool>` is one of Muster's own; `workflow_<name>` is a workflow. Servers in
+a **family** (one instance per management cluster — the infrastructure servers) appear once under the
+family name and take the instance argument `management_cluster`, whose value is the **full server
+name**, `<mc>-mcp-kubernetes`. The valid values are the `enum` on the tool's own schema: take them from
+`describe_tool`, never guess or shorten them.
 
-**Names.** `x_<server>_<tool>` is an external server's tool (`x_kubernetes_list`,
-`x_prometheus_query`, `x_agent-manager_create_agent`); `core_<area>_<tool>` is one of Muster's own
-(`core_workflow_list`, `core_auth_login`); `workflow_<name>` is a workflow. Servers in a **family**
-(one instance per cluster) appear once and take the instance argument `management_cluster` whose
-value is the full server name, `<mc>-mcp-kubernetes` (the valid values are the enum on the tool's
-schema). Every one of these names is a `name` passed to `call_tool`, never a function of its own —
-a runtime that is handed `x_kubernetes_list` as a function name fails the turn.
+## What you see: the catalogue, filtered per request
 
-## Toolsets and presets
+The catalogue is computed on every request, statelessly, as three filters in order: the servers **this
+person is signed in to** (a server they have not signed in to has no tools for them), the **workflows**
+available, and the **toolset** — the selector list on the agent's release (`preset:<name>`,
+`server:<name>`, `workflow:<name>`, `tool:<name>`, exact names), which the runtime sends as the
+`X-Muster-Toolset` header. `filter_tools`, `describe_tool` and `list_tools` answer within it; `call_tool`
+on a tool outside it is refused with an error naming the toolset. An unknown preset is an error on every
+meta-tool call, never a fall-back to everything; a request without the header sees the unfiltered
+catalogue — an agent without a toolset has implicit full access to whatever the person can reach.
 
-A **toolset** is the short selector list on an agent's release that says which of the gateway's
-tools the agent is composed with. It travels as the `X-Muster-Toolset` header on every request the
-agent's runtime makes to Muster; Muster evaluates it **per request, statelessly**, as the third
-filter on the caller's catalogue (after "which servers is this person signed in to" and "which
-workflows are available"). `list_tools`, `filter_tools`, `describe_tool` answer within it;
-`call_tool` of a tool outside it is refused with an error naming the toolset.
+**Composition, not authorization.** The toolset bounds the model. The only credential on the path is the
+**person's forwarded token**, so every backend authorizes the person (Kubernetes RBAC, a service's own
+accounts): an agent always acts within *its toolset ∩ the person's access*, and two people driving the
+same agent can see different tools.
 
-Selectors: `preset:<name>`, `server:<name>`, `workflow:<name>`, `tool:<name>` — exact,
-case-sensitive names, at most 32 inline. Patterns, excludes, the read-only predicate and labels
-exist only inside presets. `toolset:<name>` is reserved.
+## Finding and running a tool
 
-| Preset | Resolves to |
-|---|---|
-| `read-only` (built in) | every tool its server annotates read-only, plus every workflow whose steps only call read-only tools; since Muster 5.13.0 also the read-only `core_*` tools, `core_auth_login` among them (signing in to a server changes nothing on the platform) |
-| `none` (built in) | nothing — a chat-only agent; the chart renders no Muster binding at all |
-| `full` (built in) | the whole catalogue, core tools included — the behaviour before toolsets existed, chosen on purpose |
-| `infrastructure` (platform) | every server labelled `agent-platform.giantswarm.io/tool-group=infrastructure`: the mcp-kubernetes, mcp-capi and mcp-prometheus families |
-| `agent-platform` (platform) | every server labelled `…/tool-group=agent-platform` (agent-manager, model-manager) plus `core_*` — the preset for an agent that manages the platform |
+1. A workflow first — `filter_tools {"query": "<the question in words>"}` or
+   `{"pattern": "workflow_*", "description_filter": "<topic>"}` — because one call answers a whole question.
+2. Otherwise shortlist with `filter_tools`: `pattern` (glob on names), `query` (ranked natural language),
+   `description_filter` (substring), `labels`; `limit`/`offset` page and `truncated` says there is more;
+   `include_schema: true` only for the final candidates.
+3. `describe_tool {"name": …}` for the authoritative description and schema, then `call_tool`.
 
-Installations add their own presets in Muster's values (`muster.muster.toolsetPresets`), reviewed
-through GitOps; the portal's Tools step lists them with their descriptions. A server registered
-through the portal carries no label and belongs to no shipped preset — select it by name.
-
-**Failure behaviour is closed.** A selector that matches nothing (a server the person is not
-signed in to, a renamed tool) contributes nothing and `filter_tools` reports it as unmatched. An
-**empty toolset is an error** (say `preset:none`). An **unknown preset is an error on every
-meta-tool call**, never a silent fall-back to the full catalogue — so a preset is removed only when
-no agent names it. A request **without** the header sees the catalogue as before, which is why
-IDEs, the CLI and the portal keep working unchanged and why an agent without a toolset shows
-*Implicit full access*.
-
-**Composition, not authorization.** The toolset bounds the *model*; the person's identity and the
-backends' authorization (Kubernetes RBAC, a service's accounts) stay the boundary. An agent is
-always bounded by *its toolset ∩ the person's own access*. The header is client-declared because
-the only credential on the agent path is the person's token; when an agent identity exists, Muster
-will resolve the toolset from it instead.
+What a preset or toolset resolves to **for this caller**:
+`filter_tools {"include_presets": true, "toolset": ["preset:<name>"]}` — `presets` lists every preset
+Muster knows with its description (built-ins first), `tools` what the selectors resolve to,
+`toolset_unmatched` the selectors that selected nothing. Inside an agent this resolves within its own
+toolset and never widens it. Defining presets: https://docs.giantswarm.io/tutorials/agent-platform/toolset-presets/.
 
 ## MCP servers
 
-`MCPServer` resources (`muster.giantswarm.io/v1alpha1`, namespace `muster`) register the servers.
-On a cluster they are remote (`streamable-http`, `sse`) — `stdio` runs a child process inside
-Muster and is for a local `muster serve` only. States: remote `Connected`, `Auth Required`,
-`Connecting`, `Disconnected`, `Failed`; stdio `Running`, `Starting`, `Stopped`, `Failed`.
-**`Auth Required` is healthy** — reachable, waiting for a person's sign-in; only `Failed` is an
-outage and only `Failed`/flapping alerts. The tool-group label sorts a server into Infrastructure
-or Agent Platform; no label means Registered server. Tools are discovered when a server starts and
-re-registered live — no client restart.
+Servers are registered as `MCPServer` resources (`muster.giantswarm.io`) in the platform's namespace on
+the management cluster. `workflow_platform-servers` shows them with state and tool group in one call;
+the raw view is `call_tool` → `x_kubernetes_list` with `resourceType: mcpservers`,
+`apiGroup: muster.giantswarm.io`, `allNamespaces: true` (state in `status.state`, group in the label
+`agent-platform.giantswarm.io/tool-group`; no label means a person registered it). **`Auth Required` is
+healthy** — reachable, waiting for a sign-in; only `Failed` is an outage. Tools register live when a
+server connects, no client restart. Adding servers:
+https://docs.giantswarm.io/tutorials/agent-platform/managing-mcp-servers/,
+https://docs.giantswarm.io/tutorials/agent-platform/connecting-custom-mcp-servers/,
+https://docs.giantswarm.io/tutorials/agent-platform/multi-cluster-access/.
 
 ## Workflows
 
-A `Workflow` resource is a list of steps Muster runs server-side (`tool` calls, `forEach`,
-`parallel`, an `onFailure` block), returning one JSON document; Muster registers it as
-`workflow_<name>`. One call replaces the agent's discover-query-correlate loop: measured on four
-real alerts, 17× fewer tool calls and about 10× fewer cache-read tokens. Two rules decide whether an
-agent ever uses one: `spec.description` is **the only text the agent sees** (max 1000 characters),
-and `filter_tools`' description filter is a **case-insensitive substring match** — so the
-description leads with the topic keyword and the natural question ("pod health", "are any pods
-failing on <mc>?"), and carries a **stop-when-healthy rule** ("empty result means healthy: write a
-one-line summary and stop") plus the one follow-up call the agent may make. A `readOnly` workflow
-(steps call only read-only tools) is part of `preset:read-only`.
+A `Workflow` resource is a list of tool calls Muster runs server-side, returning one shaped JSON document;
+it is registered as `workflow_<name>` and called like any tool. One call replaces the agent's
+discover–query–correlate loop — an order of magnitude fewer tool calls and tokens than the same
+investigation with raw tools. `core_workflow_list` lists them (or `filter_tools` with `pattern:
+workflow_*`); `describe_tool` shows a workflow's arguments and its description, the only text an agent
+ever sees of it. The platform's own discovery workflows: `workflow_agent-status` (one agent's verdict),
+`workflow_agent-roster` (every agent), `workflow_model-overview` (model configs and, where it runs,
+model-manager's backends and capacity), `workflow_platform-servers` (MCP servers). A workflow whose steps
+are all read-only is read-only itself and part of the built-in read-only preset. Authoring:
+https://docs.giantswarm.io/tutorials/agent-platform/authoring-workflows/ and
+https://docs.giantswarm.io/tutorials/agent-platform/saving-tokens-with-workflows/.
 
-## When a tool is missing or refused
+## model-manager
 
-| Symptom | Cause | What to do |
-|---|---|---|
-| A server's tools do not appear for this person | not signed in to that server (per-user visibility) | `core_auth_login` for that server, or sign in on the portal's Servers page; `muster auth status` shows `Auth Required` |
-| `call_tool` refused, error names the toolset | the tool is outside the agent's toolset | that is the agent's composition; change the agent's toolset (agent-manager `update_agent`), not the call |
-| Every meta-tool call errors, naming a preset | the agent's toolset names a preset the installation does not define | define the preset or change the toolset |
-| `forbidden` from a cluster | Kubernetes RBAC for the person | bind the identity-provider group to a role on that cluster |
-| The agent keeps asking to authenticate | expired session / audience mismatch on a forwarding server | re-login; check `requiredAudiences` on the `MCPServer` |
-| A workflow runs by name but the agent never picks it | its description lacks the words the agent searches for | rewrite `spec.description` |
-| A workflow returns clean and the agent keeps digging | no stop-when-healthy rule | add it to the description |
-| Turn fails "tool `x_…` not found" | the model emitted a backend tool as a function name | call it through `call_tool`; on the Go runtime the mistake is handed back, on the Python runtime it ends the turn |
+model-manager is the platform's MCP server for the models an installation serves: it knows the configured
+serving backends and their inventory, pulls, loads, unloads and deletes models, and wires a served model
+into a kagent `ModelConfig` so agents can run on it; on GPU installations it also offers presets, hub
+search, a fit check and node capacity. Its tools appear as `x_model-manager_*`:
+`filter_tools {"pattern": "x_model-manager_*"}`, then `describe_tool`.
+
+An **empty result** means model-manager is not deployed on this installation (off by default in the
+platform chart; it needs a serving backend) or you are not signed in to it. Model configs then come from
+`workflow_model-overview`, `x_agent-manager_list_model_configs`, or the `ModelConfig` resources
+(`kagent.dev/v1alpha3`) in the runtime's namespace via `x_kubernetes_list`. Bringing a model to an
+installation: https://docs.giantswarm.io/tutorials/agent-platform/bring-your-own-model/.
+
+## When a tool is missing or refused — the live checks
+
+- `filter_tools {"include_presets": true, "toolset": [<the agent's selectors>]}`: `toolset_unmatched`
+  names the selectors that select nothing (a server you are not signed in to, a renamed tool, an empty
+  preset); `presets` shows whether a named preset exists at all.
+- An error **naming the toolset** on `call_tool` is composition — the tool is outside the agent's
+  toolset. Change the agent (`agent-platform-agent-management`), not the call.
+- `forbidden` or `Unauthorized` from a backend is the **person's** authorization (RBAC on that cluster,
+  the service's account); no toolset change affects it.
+- A server in `Auth Required` whose tools you cannot see: sign in — `core_auth_login` for that server,
+  the portal's Servers page, or `muster auth login` on the CLI (`muster auth status` shows the state).
+  Repeated re-authentication prompts point at an expired session or an audience mismatch on that
+  server's `MCPServer` resource.
+- "tool `x_…` not found" from the runtime: a backend tool was emitted as a function — go through `call_tool`.
+- Everything else: https://docs.giantswarm.io/tutorials/agent-platform/troubleshooting/.
