@@ -1,110 +1,87 @@
 ---
 name: agent-platform-agent-management
-description: Use when asked to create, change, inspect, troubleshoot or delete an agent on the Giant Swarm Agent Platform — through agent-manager's tools (x_agent-manager_* via call_tool), the developer portal's create flow, or a GitOps HelmRelease of the agent chart. Covers the technical name, model configs, skills and their pinning, choosing a toolset, writing the system prompt, the status verdicts, and the boot failures and what they mean.
+description: Use when asked to create, change, inspect, troubleshoot, re-pin the skills of or delete an agent on the Giant Swarm Agent Platform — through agent-manager's tools (x_agent-manager_* via call_tool), the developer portal's create flow, or a GitOps HelmRelease of the agent chart. Covers the agent unit on the cluster and where its live reference is, which agents get a pull request instead of a live write, the working shape from validate to ready, the rules for the technical name, model config, toolset, skills and system prompt, and the status verdict with its one follow-up.
 metadata:
-  version: "1.0.0"
+  version: "2.0.0"
 ---
 
 # Managing agents
 
 Public pages: https://docs.giantswarm.io/tutorials/agent-platform/create-an-agent/ (the portal
-flow), https://docs.giantswarm.io/overview/agent-platform/toolsets/ (choosing tools). References:
+flow) and https://docs.giantswarm.io/tutorials/agent-platform/troubleshooting/. Muster's meta-tools,
+the `call_tool` contract and toolsets are the `agent-platform-tools` skill; the skill format and
+what a pin is are the `agent-platform-skill-authoring` skill. The one reference here is
+`references/system-prompt.md`: the paragraph every tooled agent's prompt needs, and a template.
 
-| Topic | Read |
-|---|---|
-| Every value of the `agent` chart and what it renders | `references/agent-chart-values.md` |
-| A GitOps `HelmRelease` for an agent, ready to adapt | `references/helmrelease-example.md` |
-| Writing the system prompt: the paragraph every tooled agent needs, the template | `references/system-prompt.md` |
-| Status shapes, boot failures, where the evidence is | `references/troubleshooting.md` |
+## The agent unit
 
-## What an agent is on the cluster
+One agent is one Flux `HelmRelease` of the `agent` chart in the `kagent` namespace. helm-controller
+renders an `AgentTemplate` (prompt, model config, pinned skills, tool bindings, compaction) and, for
+a tooled agent, a `RemoteMCPServer` named after the agent that points at Muster with the agent's
+toolset. The platform's `Harness` admits the template, compiles the golden snapshot and reports
+`Ready`. Any change is a new revision: running sessions keep their actor, new sessions start from
+the new one.
 
-One agent = one Flux **`HelmRelease` of the `agent` chart** (`oci://gsoci.azurecr.io/charts/giantswarm/agent`,
-range `1.x`, one shared `OCIRepository` named `agent` per namespace), in the `kagent` namespace,
-with the agent's definition as inline values. helm-controller renders an **`AgentTemplate`**
-(`kagent.dev/v1alpha3`: prompt, model config, pinned skills, tool bindings, compaction) and — unless
-the toolset is exactly `["preset:none"]` — a **`RemoteMCPServer`** named after the agent, pointing
-at Muster with the `X-Muster-Toolset` header. The platform's `Harness` `kagent` admits the template
-by label, compiles a golden snapshot and reports `Ready`. Three doors write the same thing: the
-portal's create flow, agent-manager's tools, a GitOps repository. **Confirm every choice you make
-for the person** — the technical name above all — before writing.
+Where the reference lives — fetch it, never quote it from memory:
 
-## The agent-manager tools
+- Chart source and version range, resolved chart and schema version, managed namespaces, Harness,
+  skills repositories, API versions and capabilities: `x_agent-manager_get_info`.
+- The values schema and the manifests a set of values renders: `x_agent-manager_validate_agent`
+  with the intended values returns the composed `HelmRelease` (and `OCIRepository`) and every
+  violation, writing nothing. It is also how a GitOps `HelmRelease` is drafted: validate, copy.
+- The CRDs and the live objects: `x_kubernetes_api_resources` for the `kagent.dev` group, then
+  `x_kubernetes_get` of `agenttemplates`, `remotemcpservers`, `modelconfigs` in `kagent` and of
+  `helmreleases` for the releases. The template's `status.harnesses[]` carries the conditions.
 
-Ten read-only and write tools, exposed by Muster as `x_agent-manager_*`, called as the person
-(`writesAsCaller`), each through `call_tool`:
+## Three doors, two ways to change
 
-```json
-{"name": "x_agent-manager_create_agent", "arguments": {"name": "…", "modelConfig": "…", "toolset": ["…"]}}
-```
+The portal's create flow, agent-manager's tools and a GitOps repository write the same unit.
+`workflow_agent-roster` shows every agent with its management mode: `helmrelease` is written live
+through agent-manager; `gitops` is applied by Flux and changes through a **pull request** — a live
+write is refused, and a `force`d one is reverted at the next reconcile with a misleading audit
+trail; `none` is a bare template without a release. Where the pull request goes: the release's
+`kustomize.toolkit.fluxcd.io/name` and `/namespace` labels name the Flux `Kustomization` that
+applies it, and its `sourceRef` is the repository. The portal shows the Git source on such agents.
 
-| Tool | Use |
-|---|---|
-| `get_info` | Call first: chart range and resolved version, managed namespaces, Harness name, Muster URL, the skill repositories, capabilities |
-| `list_model_configs` | The `ModelConfig`s of the namespace with provider, model and `accepted` |
-| `list_skills` | Every `SKILL.md` in the configured repositories (`https://github.com/giantswarm/agent-skills` on Giant Swarm installations) with name, description, path, ref and the head commit — the commit a skills entry pins. `repository`, `ref`, `refresh` narrow or refresh |
-| `list_agents` | Every agent of the namespace: display name, description, model config, pinned skills, toolset (or `implicitFullAccess: true`), readiness, the owning release and how it is managed (`helmrelease` writable here; `gitops` read-only without `force`; `none` a bare template) |
-| `get_agent` | One agent in full, including the release's values |
-| `get_agent_status` | One verdict — `ready`, `progressing`, `failed` — with the sentence behind it, folded from the template's Harness conditions, the release and the pods |
-| `validate_agent` | Dry run of a create (or of an update with `update: true`): composes the manifests, checks the name, the model config, the toolset, pins the skills, validates against the chart schema; returns the manifests and every violation. Nothing is written |
-| `create_agent` | Writes the release (and the shared `OCIRepository` if missing). Requires `name`, `modelConfig`, `toolset`. Refuses an unknown model config (lists the valid ones), an empty toolset, a `runtime` argument, a `gitAuthSecretName` |
-| `update_agent` | Merges the given fields into the release values: `skills` and `toolset` replace their whole list; `""` clears a field to the chart default; `refreshSkills: true` re-pins every git skill to its default-branch head. Refused for `gitops`-managed or suspended releases unless `force: true` |
-| `delete_agent` | Removes the release; keeps the shared `OCIRepository` while other agents use it. Refused for `gitops` without `force` |
+## Working with agent-manager
 
-The working shape: `get_info` → `list_model_configs` and `list_skills` → `validate_agent` →
-`create_agent` → poll `get_agent_status` until `ready` (about a minute; the golden snapshot is the
-long part) → a first turn as the person → `update_agent` for follow-ups.
+agent-manager's tools are `x_agent-manager_*` through `call_tool`, acting as the person
+(`writesAsCaller`). Discover them live with `filter_tools` (`pattern`) and read each schema with
+`describe_tool` before the first call; never assume an argument. `get_info` comes first. Model
+configs come from `workflow_model-overview` (or `list_model_configs`), skills from `list_skills`,
+which also shows the head commit a pin resolves to. Then `validate_agent` → `create_agent` →
+`workflow_agent-status` until `ready` (about a minute; the golden snapshot is the long part) → a
+first turn as the person → `update_agent` for follow-ups. `update_agent` replaces `skills` and
+`toolset` as whole lists; `refreshSkills: true` re-pins every git skill to its default-branch
+head. A GitOps agent re-pins through a commit that changes the pinned commit.
 
-## The choices and their rules
+## The rules the tools do not tell you
 
-- **Technical name** (`name`): DNS-1123, max 63 characters, the name of the release, the template
-  and the `RemoteMCPServer`, and the seed of the avatar. Chosen by the person, never derived from
-  the display name in silence. `displayName` is the friendly, Unicode name (max 63); `description`
-  says what the agent is for (the Slack roster and the portal show it).
-- **Model config**: one of `list_model_configs`; on Giant Swarm installations `default-model-config`
-  (Claude Sonnet) and often a stronger one (`anthropic-opus-5`). Never invent one — an agent on a
-  missing or not-accepted config never boots.
-- **Toolset**: required; the smallest that does the job. `["preset:read-only"]` for agents that
-  answer questions and investigate; `["preset:none"]` for chat-only agents whose knowledge is in
-  their skills; `["preset:agent-platform"]` for agents that manage the platform; `["preset:full"]`
-  only on an explicit request, since it is everything the person can reach. Add a server or a
-  workflow by exact name (`server:mcp-kyverno-playground`, `workflow:pod-health`). Details and the
-  failure behaviour: the `agent-platform-tools` skill.
-- **Skills**: entries `{name, path, git: {url, commit | ref}}` or `{name, oci}`; what is written is
-  always a pin (a ref resolves to its head commit at write time; a tag to its digest). Public
-  repositories only through agent-manager and the portal — a private repository's skill fails the
-  golden boot with `could not read Username for 'https://github.com'` because neither passes a
-  credential; a GitOps release can carry `skillsGitAuthSecretRef.name` (a Secret in `kagent` with
-  key `token`). Every agent on the platform may take `agent-platform-overview`,
-  `agent-platform-tools`, `agent-platform-agent-management` and `agent-platform-skill-authoring`
-  from `giantswarm/agent-skills` when it should explain or operate the platform.
-- **System prompt**: focused on role, voice and rules; knowledge goes into skills. Every tooled
-  agent's prompt carries the Muster meta-tool paragraph from `references/system-prompt.md` — a
-  runtime that is handed `x_kubernetes_list` as a function name fails the turn.
-- **Icon**: `iconUrl` = `https://avatars.<base domain>/v1/<name>.png` where the installation
-  serves avatars (`https://avatars.gazelle.awsprod.gigantic.io/v1/<name>.png` on the Giant Swarm
-  Dev Portal installation); the portal shows it.
+- **Technical name**: DNS-1123, at most 63 characters, chosen by the person, never derived from the
+  display name in silence. It names the release, the template, the `RemoteMCPServer` and the
+  avatar. The display name and the description are what the roster, Slack and the portal show.
+- **Model config**: one from the live list, never invented — an agent on a missing or not-accepted
+  config never boots.
+- **Toolset**: the smallest that does the job; `preset:full` only on an explicit request. What the
+  selectors are and how to see what a preset resolves to: the `agent-platform-tools` skill.
+- **Skills**: always pinned, and a private skills repository only through GitOps — what a pin is and
+  what the release needs for a private repository: the `agent-platform-skill-authoring` skill.
+- **System prompt**: role, voice and rules; knowledge goes into skills. Every agent with tools
+  carries the meta-tool paragraph from `references/system-prompt.md`.
+- **Icon**: `iconUrl` is `https://avatars.<base domain>/v1/<name>.png` where the installation
+  serves avatars; the portal shows it.
+- **Confirm every choice you made for the person** — the technical name above all — before
+  writing. Delete only on an explicit request that names the agent, one at a time. Never `force` a
+  write onto a GitOps release.
 
-## Changing and removing
+## Status and troubleshooting
 
-- A change is a new revision of the whole unit: `update_agent` (portal-created agents) or a new
-  commit (GitOps agents). The Harness compiles a new golden snapshot; running sessions keep their
-  actor, new sessions start from the new revision.
-- **GitOps-managed gets a pull request, ad-hoc gets a live write.** `list_agents` says which is
-  which; the portal shows the Git source and refuses live edits and deletes on it. Never `force`
-  a write onto a GitOps release to "help" — Flux reverts it and the audit trail is misleading.
-- `delete_agent` removes the release; the template and `RemoteMCPServer` go with it, sessions'
-  transcripts stay in Postgres, running actors are collected. Delete only on an explicit request
-  that names the agent, and one at a time.
-
-## Status: what Ready means and how long it takes
-
-`get_agent_status` folds four sources: the template's `status.harnesses[]` conditions (`Accepted`,
-`ResolvedRefs`, `Compatible`, `Ready`), the `HelmRelease` conditions, the release's readiness and
-recent warnings. Normal: `progressing` for 20–90 s after a create (Flux reconciles within seconds
-when triggered, the golden boot takes the rest), then `ready`. Anything at `Ready=False` for more
-than a few minutes is a failure — the table in `references/troubleshooting.md` maps the reason to
-its cause. The one that hides best: `Ready=False ActorTemplatePending: waiting for the
-ActorTemplate golden snapshot` for ever, whose cause is only in the worker pod's log (a skill fetch
-that fails, a Secret that is missing, a prompt-less template) while the Harness retries the boot
-every minute without bound.
+`workflow_agent-status` (`name`, `namespace` = `kagent`) is the one call: the verdict — `ready`,
+`progressing`, `failed`, `not_found` — with the template's harness conditions (`Accepted`,
+`ResolvedRefs`, `Compatible`, `Ready`), the release's condition and the golden-worker log lines that
+name the agent. `progressing` for about a minute after a write is normal. The failure that hides is
+`Ready=False ActorTemplatePending` for more than a few minutes: the Harness retries the golden boot
+every minute without bound, and the cause — a skill fetch that fails, a Secret that is missing — is
+only in those log lines. Name the one follow-up the workflow allows, do it, call the workflow again,
+and stop when it says `ready`. For the whole namespace, `workflow_agent-roster`. Beyond the
+workflows the live objects above are the evidence; the portal shows the same conditions verbatim.
