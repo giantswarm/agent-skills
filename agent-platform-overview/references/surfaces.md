@@ -67,8 +67,9 @@ staff.
 - **Choosing an agent**: `@Swarmgeist /agent "<display name>" <question>` or `/agent <technical-name>
   …`; `@Swarmgeist /agent` lists the roster with descriptions. Agents are discovered live from the
   platform, so a new agent is selectable the moment it is Ready. The default agent is a platform
-  setting (the SRE Agent on the Giant Swarm installation). Switching agents inside a conversation
-  is refused: start a new thread.
+  setting (`klausGateway.a2a.defaultAgent`; on the Giant Swarm installation the Swarmgeist agent,
+  the platform's read-only explainer, since 2026-09-15 — the SRE Agent is `/agent "SRE Agent"`).
+  Switching agents inside a conversation is refused: start a new thread.
 - **While it works**: 👀 on your message, then ✅/❌; tool activity as one status line that collapses
   into a receipt (`🛠️ N steps · tool ×k`); `/details full|on|off` per conversation; *Inspect agent
   steps* (⋯ → Apps) shows only you the last tool calls behind recent turns.
