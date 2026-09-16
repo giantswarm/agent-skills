@@ -1,0 +1,71 @@
+---
+name: giantswarm-repository-lifecycle
+description: Use when asked to deprecate, archive, delete, hand over or transfer a Giant Swarm repository, to say who owns one, whose approval a team-file change needs and where the ask lands, or to find repositories that look abandoned or unowned (orphan score, unassigned, inactive) and record a decision about them — through giantswarm-repo-manager's tools behind Muster, acting as the person.
+metadata:
+  version: "1.0.0"
+---
+
+# Repository lifecycle and ownership
+
+Ownership and lifecycle are properties of the repository's entry in its team's file
+(`repositories/team-<slug>.yaml` in https://github.com/giantswarm/github): the owner is the file the entry
+lives in, the stage is `lifecycle`. Every change here is a team-file pull request opened as the person and
+approved by the team it concerns; nothing is done on GitHub by hand. Creating and configuring a repository
+and reading its set-up state is the `giantswarm-repository-setup` skill — it also has the recipes to find the
+manager's tools and to read the schema; Renovate and CI, `giantswarm-repository-ci-renovate`.
+
+## What each change does
+
+`describe_tool` on the tool before the first call; the contract that is easy to get wrong:
+
+- **Deprecate** — `set_lifecycle` with `lifecycle: deprecated`: the component is being phased out. A
+  generated Renovate config drops to security-only updates, the portal catalog flags it, the team digests
+  skip it. The repository keeps working, building, releasing and taking pull requests.
+- **Archive** — `set_lifecycle` with `lifecycle: archived`: the work is over. The reconciler archives the
+  repository on GitHub (read-only) and unfollows its CircleCI project. **The entry stays in the team file as
+  the record** — nothing removes it, and the repository is never recreated. Un-archiving is not something
+  the automation does; ask the person what they actually need.
+- **Delete** — does not exist: no field, no tool, no pull request expresses it. A repository whose work is
+  over is archived; say so and offer the archive. The one entry a person removes by hand is a declared
+  repository that is gone from GitHub (finding `repository-missing`).
+- **Transfer** — `transfer_repository` with the receiving team's slug: one pull request that moves the
+  entry from the giving team's file into the receiving team's and names both teams. After the merge the
+  reconciler re-applies permissions, CODEOWNERS and the catalog mapping for the new owner. A repository
+  that exists on GitHub but is declared by nobody is not transferred — it is added to the team's file.
+- **Back to production** — `update_repository` with the whole entry and `lifecycle` at its default.
+
+`reason` goes into the pull request body and the ask — always pass the person's why. `dryRun: true` renders
+the change and writes nothing; `mode: "commit"` opens the pull request as the person; `mode: "apply"` is
+refused on every write tool.
+
+## Whose review, and where the ask lands
+
+Only a *creation-only* pull request is machine-approved (`giantswarm-repository-setup`). Every lifecycle and
+ownership change is a person's decision, reviewed through `CODEOWNERS`:
+
+- deprecate, archive, a configuration change: the **owning team** — the ask goes to its Slack channel;
+- transfer: the **receiving team** approves in its channel; the giving team gets a notice.
+
+The channel is `slackChannel` in `repository-setup/team-<slug>.yaml` of `giantswarm/github`; read that file
+when the person asks where the ask went. A team without a file gets no message — the pull request is then
+reviewed on GitHub alone, and the person tells the team. A member approves with the Approve button of the
+Slack ask or with an approving review on GitHub; `approve_change` with the pull request number in
+`giantswarm/github` does the same from a chat, after the manager has confirmed on GitHub that the caller is a
+member of the team the change belongs to — a non-member is refused, and you never approve, merge or push
+around this review yourself.
+
+## Abandoned or unowned repositories
+
+The inventory scores every repository of the org as a possible orphan; the score **and its reasons** are on
+each row of `list_repositories` and in `get_repository`, and `describe_tool` names the filters (`scope`,
+`team`, `minOrphanScore`, `inactiveDays`, `renovate`, `lifecycle`, `finding`, `fork`, `decision`).
+Report the reasons, not the number: the score is a suggestion computed from facts — the last commit by a
+person, open bot pull requests, Renovate activity, a fork, a missing declaration — and the person judges;
+`stalePeriodDays` re-judges the same facts against another period. Scope the question: `mine` for the
+person's teams, `team` for one team, `unassigned` for repositories on GitHub without a declaration — those
+have no owner, no reconciler and no channel, and Renovate's onboarding pull requests on them are the visible
+sign (`giantswarm-repository-ci-renovate`).
+
+When the person decides a repository stays as it is, `decide_repository` with verdict `keep` and the why
+annotates the record (it survives every refresh; nothing changes on GitHub), so the next look does not raise
+it again. Any other decision is a lifecycle change or a transfer above, with the review it needs.
