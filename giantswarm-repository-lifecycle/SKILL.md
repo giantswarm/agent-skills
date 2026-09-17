@@ -1,8 +1,8 @@
 ---
 name: giantswarm-repository-lifecycle
-description: Use when asked to deprecate, archive, delete, hand over or transfer a Giant Swarm repository, to say who owns one, whose approval a team-file change needs and where the ask lands, or to find repositories that look abandoned or unowned (orphan score, unassigned, inactive) and record a decision about them — through giantswarm-repo-manager's tools behind Muster, acting as the person.
+description: Use when asked to deprecate, archive, delete, hand over or transfer a Giant Swarm repository, to say who owns one, whose approval a team-file change needs and where the ask lands, or to find repositories that look abandoned or unowned (unassigned, inactive, archived on GitHub, findings) — through giantswarm-repo-manager's tools behind Muster, acting as the person.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Repository lifecycle and ownership
@@ -56,16 +56,15 @@ around this review yourself.
 
 ## Abandoned or unowned repositories
 
-The inventory scores every repository of the org as a possible orphan; the score **and its reasons** are on
-each row of `list_repositories` and in `get_repository`, and `describe_tool` names the filters (`scope`,
-`team`, `minOrphanScore`, `inactiveDays`, `renovate`, `lifecycle`, `finding`, `fork`, `decision`).
-Report the reasons, not the number: the score is a suggestion computed from facts — the last commit by a
-person, open bot pull requests, Renovate activity, a fork, a missing declaration — and the person judges;
-`stalePeriodDays` re-judges the same facts against another period. Scope the question: `mine` for the
-person's teams, `team` for one team, `unassigned` for repositories on GitHub without a declaration — those
-have no owner, no reconciler and no channel, and Renovate's onboarding pull requests on them are the visible
-sign (`giantswarm-repository-ci-renovate`).
+The inventory carries the facts, not a verdict: each row of `list_repositories` names the team, the lifecycle,
+whether GitHub has the repository archived, the last commit by a person, the Renovate state, the finding kinds
+and the set-up state; `get_repository` has the full record. `describe_tool` names the filters (`scope`, `team`,
+`search`, `renovate`, `visibility`, `fork`, `lifecycle` — `active`, `deprecated`, `archived`, where archived on
+GitHub counts as archived — `archived`, `inactiveDays`, `finding`). Read the facts to the person and let them
+judge: `inactiveDays` for repositories nobody committed to in a while, `renovate: inactive` for a configured but
+silent Renovate, `finding` for a specific gap. Scope the question: `mine` for the person's teams, `team` for one
+team, `unassigned` for repositories on GitHub without a declaration — those have no owner, no reconciler and no
+channel, and Renovate's onboarding pull requests on them are the visible sign (`giantswarm-repository-ci-renovate`).
 
-When the person decides a repository stays as it is, `decide_repository` with verdict `keep` and the why
-annotates the record (it survives every refresh; nothing changes on GitHub), so the next look does not raise
-it again. Any other decision is a lifecycle change or a transfer above, with the review it needs.
+There is no note to leave on a record. A repository that stays as it is needs nothing; any other outcome is a
+lifecycle change or a transfer above, with the review it needs, and takes effect through its pull request.
