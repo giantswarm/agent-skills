@@ -2,7 +2,7 @@
 name: giantswarm-repository-lifecycle
 description: Use when asked to deprecate, archive, delete, hand over or transfer a Giant Swarm repository, to say who owns one, whose approval a team-file change needs and where the ask lands, or to find repositories that look abandoned or unowned (unassigned, inactive, archived on GitHub, findings) — through giantswarm-repo-manager's tools behind Muster, acting as the person.
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Repository lifecycle and ownership
@@ -34,9 +34,11 @@ manager's tools and to read the schema; Renovate and CI, `giantswarm-repository-
   that exists on GitHub but is declared by nobody is not transferred — it is added to the team's file.
 - **Back to production** — `update_repository` with the whole entry and `lifecycle` at its default.
 
-`reason` goes into the pull request body and the ask — always pass the person's why. `dryRun: true` renders
-the change and writes nothing; `mode: "commit"` opens the pull request as the person; `mode: "apply"` is
-refused on every write tool.
+`reason` goes into the pull request body and the ask — always pass the person's why. An entry without
+`align: true` gets it in the same pull request: `set_lifecycle` writes it beside `lifecycle`, and the ask says
+so — from the merge on the reconciler aligns the repository instead of only checking it
+(`giantswarm-repository-setup`). `dryRun: true` renders the change and writes nothing; `mode: "commit"` opens
+the pull request as the person; `mode: "apply"` is refused on every write tool.
 
 ## Whose review, and where the ask lands
 
