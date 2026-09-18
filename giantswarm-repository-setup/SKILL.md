@@ -2,7 +2,7 @@
 name: giantswarm-repository-setup
 description: Use when asked to create a Giant Swarm repository, to declare one or change its configuration in a team file of giantswarm/github, to read or explain a repository's set-up state (which step is red and what fixes it), or to align a repository now — through giantswarm-repo-manager's tools behind Muster, acting as the person. Carries the contract (the declaration is the desired state; validate → dry run → confirm → create; the two guards on machine approval) and the recipes to fetch the schema and the inventory live, never their contents.
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # Repository set-up
@@ -81,17 +81,24 @@ catalog, release — with the last reconciler run. Read a red step in this order
 
 - **The check names its fix.** What the engine cannot repair it reports with the fix; say that first.
 - **Reality drifted from the declaration** (a hand change on GitHub, a lost CircleCI follow, a first
-  release that never happened): `align_repository` — *Align now* — dispatches the reconciler for that
-  repository as the person. It changes the repository only when its entry says `align: true`; otherwise
-  the run checks, reports the drift and changes nothing, and the answer names the repository and how it
-  opts in — `update_repository` with `align: true` in its entry, reviewed by the team. A repository
-  created through the product carries the field from its creation. A repository **without an entry**
-  cannot opt in: the run needs `team` and only checks — declare the repository. `dryRun: true` answers
-  with the mode (align or check), the opt-in, the planned changes from the record's last check and a
-  warning paragraph — show it to the person before they confirm `mode: "commit"` (here: dispatch).
-  Nothing is written to the team files and the standup channel hears nothing about it: the record shows
-  `setup.pendingRun` until the run's result lands as `setup.lastRun` with its failed steps and findings;
-  a run silent for 15 minutes leaves the finding `reconcile-run-missing`.
+  release that never happened): `align_repository` — *Align now* — as the person. Its `mode` follows
+  the repository's entry, one of three:
+  - `align` — the entry says `align: true`: the reconciler is dispatched for that repository now.
+  - `opt-in` — the repository is declared but has not opted in: nothing is dispatched. The commit opens
+    the pull request that sets `align: true` in its entry (every other byte untouched, auto-merge armed)
+    and delivers the ask with the Approve button to the team's channel — a member of the team other than
+    the person approves — and the reconciler aligns the repository when the pull request merges. A
+    repository created through the product carries the field from its creation.
+  - `check` — the repository has **no entry**: it cannot opt in; the run needs `team` and only checks,
+    reporting the drift — declare the repository.
+
+  `dryRun: true` answers with the mode, the opt-in, the planned changes from the record's last check and
+  a warning paragraph; for `opt-in` also the entry as it will read, the pull request and the ask (who
+  approves, in which channel). Show it to the person before they confirm `mode: "commit"`. The standup
+  channel hears nothing about an Align now itself (an opt-in that merges is a change like any other: the
+  reconciler's own notice follows): the record shows `setup.pendingRun` until the run's result lands as
+  `setup.lastRun` with its failed steps and findings; a run silent for 15 minutes leaves the finding
+  `reconcile-run-missing`.
 - **The declaration is wrong**: the fix is a field and lands through `update_repository`. The pipeline is
   derived from `gen.flavours`, `gen.language` and whether a `Dockerfile` sits at the repository root — no
   image job means no root Dockerfile, a chart job on a repository without a chart means the `app` flavour
