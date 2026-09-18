@@ -30,5 +30,17 @@ copies of it, and each owns one topic.
 The three follow the same standard: the schema is read from `giantswarm/github`, the inventory and the
 tools from giantswarm-repo-manager through Muster, and no list of fields or tools is copied into a skill.
 
+## Skills for the Platform Manager agent
+
+| Skill | For |
+|---|---|
+| `giantswarm-platform-installations` | The vocabulary — installation, platform capability, capability definition, the installation opt-in — and how to read a state and a refusal (*not opted in*, `auth_required`); `get_info`, `list_installations`, `verify_capability` |
+| `giantswarm-platform-capability-enablement` | `enable_capability` and `reconcile_capability`: a dry run first, how to present it (files per repository, pull requests, secrets by name, Dex clients, customer actions, the wave and the skipped), the person's confirmation, then one `commit`; never a loop of the agent's own |
+| `giantswarm-platform-actions` | The action and its approval — who approves, where the ask lands, the rollout, the probes and the report — and how to read a record through `get_action` and `list_actions` |
+
+The three follow the same standard: the definitions and their input schemas come from the manager's
+`get_info`, the tools from `describe_tool`, the installations and their states from `list_installations`,
+and no list of installations, inputs, files or tools is copied into a skill.
+
 The remaining directories are demo and domain skills (`incident-response`, `k8s-debugging`,
 `postmortems`, `agent-self-awareness`, and the fictional customers' data skills).
