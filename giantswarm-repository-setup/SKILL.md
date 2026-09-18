@@ -1,8 +1,8 @@
 ---
 name: giantswarm-repository-setup
-description: Use when asked to create a Giant Swarm repository, to declare one or change its configuration in a team file of giantswarm/github, to read or explain a repository's set-up state (which step is red and what fixes it), or to reconcile a repository now — through giantswarm-repo-manager's tools behind Muster, acting as the person. Carries the contract (the declaration is the desired state; validate → dry run → confirm → create; the two guards on machine approval) and the recipes to fetch the schema and the inventory live, never their contents.
+description: Use when asked to create a Giant Swarm repository, to declare one or change its configuration in a team file of giantswarm/github, to read or explain a repository's set-up state (which step is red and what fixes it), or to align a repository now — through giantswarm-repo-manager's tools behind Muster, acting as the person. Carries the contract (the declaration is the desired state; validate → dry run → confirm → create; the two guards on machine approval) and the recipes to fetch the schema and the inventory live, never their contents.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Repository set-up
@@ -29,11 +29,11 @@ generated CI and Renovate do, `giantswarm-repository-ci-renovate`; how `filter_t
   set" from it. The team's file shows what its repositories already declare; the README of
   `giantswarm/github` explains the reconciler, the review rules and the per-team policy.
 - **A repository's state**: the manager's `get_repository` — declaration, GitHub reality, CircleCI,
-  Renovate, catalog, the engine's set-up checks with the last reconciler run, findings, orphan score.
+  Renovate, catalog, the engine's set-up checks with the last reconciler run, findings and the record's age.
   `refresh_repository` when the record's age matters. `list_repositories` for a team's, the person's
   (`scope: mine`) or the undeclared (`scope: unassigned`) repositories.
 - **On the person's machine**: `devctl repo validate | create | status | reconcile` are the same engine
-  as a CLI (`--help` per command); `devctl app bootstrap` no longer exists.
+  as a CLI (`--help` per command).
 
 ## Creating a repository — the order is the point
 
@@ -58,9 +58,10 @@ generated CI and Renovate do, `giantswarm-repository-ci-renovate`; how `filter_t
    the pull request opens as the person. `dryRun: true` returns the same as `validate_repository`;
    `mode: "apply"` is refused on every write tool: a repository without its declaration is drift.
 5. **Answer with the pull request URL** and what happens next: creation-only merges by itself,
-   otherwise the review the notice named; the reconciler's completion message follows in the team's
-   channel. A name that is taken (the repository exists, or redirects to a renamed one) is not a
-   creation — it is a transfer or a plain addition with the team's review.
+   otherwise the review the notice named; one sentence about the creation follows in the team's standup
+   channel (`standupChannel`), with a sentence per failed step or finding of that run. A name that is
+   taken (the repository exists, or redirects to a renamed one) is not a creation — it is a transfer or
+   a plain addition with the team's review.
 
 Changing an existing repository's configuration is `update_repository` with the **whole entry** as it
 should read afterwards (not a patch — `get_repository` has the current one), validated against the
@@ -74,9 +75,15 @@ catalog, release — with the last reconciler run. Read a red step in this order
 
 - **The check names its fix.** What the engine cannot repair it reports with the fix; say that first.
 - **Reality drifted from the declaration** (a hand change on GitHub, a lost CircleCI follow, a first
-  release that never happened): `reconcile_repository` with `mode: "commit"` dispatches the reconciler
-  for that repository now — *Reconcile now* — as the person. Nothing is written to the team files; the
-  completion message follows in the team's channel. A repository **without an entry** needs `team`.
+  release that never happened): `align_repository` — *Align now* — dispatches the reconciler for that
+  repository as the person. It changes the repository only for a team that has opted in (`alignOptIn:
+  true` in `repository-setup/team-<slug>.yaml`); for any other team the run checks, reports the drift and
+  changes nothing. `dryRun: true` answers with the mode (align or check), the opt-in, the planned changes
+  from the record's last check and a warning paragraph — show it to the person before they confirm
+  `mode: "commit"` (here: dispatch). Nothing is written to the team files and the standup channel hears
+  nothing about it: the record shows `setup.pendingRun` until the run's result lands as `setup.lastRun`
+  with its failed steps and findings; a run silent for 15 minutes leaves the finding
+  `reconcile-run-missing`. A repository **without an entry** needs `team`.
 - **The declaration is wrong**: the fix is a field and lands through `update_repository`. The pipeline is
   derived from `gen.flavours`, `gen.language` and whether a `Dockerfile` sits at the repository root — no
   image job means no root Dockerfile, a chart job on a repository without a chart means the `app` flavour
@@ -85,9 +92,11 @@ catalog, release — with the last reconciler run. Read a red step in this order
 - **No team**: an undeclared repository (finding `undeclared-on-github`) has no reconciler until a team
   declares it; a declared repository gone from GitHub (`repository-missing`) is an entry a person removes.
 
-The nightly schedule repairs drift only for teams whose `repository-setup/team-<slug>.yaml` in
-`giantswarm/github` says `repairOptIn: true`, and it runs report-only today: findings with their fix,
-no repair. Read that file for a team's opt-in and Slack channel.
+The nightly schedule repairs drift for the same opted-in teams (`alignOptIn: true`) and only checks the
+others. Read `repository-setup/team-<slug>.yaml` in `giantswarm/github` for a team's opt-in and its two
+channels: asks with an Approve button go to `slackChannel`; notices — who created, added, transferred,
+archived or deprecated a repository, a failed step, a finding of that person's run — to `standupChannel`.
+A run behind which nobody's change stands (an Align now, the schedule) posts nothing.
 
 ## Rules of conduct
 
