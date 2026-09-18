@@ -2,7 +2,7 @@
 name: giantswarm-repository-lifecycle
 description: Use when asked to deprecate, archive, delete, hand over or transfer a Giant Swarm repository, to say who owns one, whose approval a team-file change needs and where the ask lands, or to find repositories that look abandoned or unowned (unassigned, inactive, archived on GitHub, findings) — through giantswarm-repo-manager's tools behind Muster, acting as the person.
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # Repository lifecycle and ownership
@@ -25,9 +25,13 @@ manager's tools and to read the schema; Renovate and CI, `giantswarm-repository-
   repository on GitHub (read-only) and unfollows its CircleCI project. **The entry stays in the team file as
   the record** — nothing removes it, and the repository is never recreated. Un-archiving is not something
   the automation does; ask the person what they actually need.
-- **Delete** — does not exist: no field, no tool, no pull request expresses it. A repository whose work is
-  over is archived; say so and offer the archive. The one entry a person removes by hand is a declared
-  repository that is gone from GitHub (finding `repository-missing`).
+- **Delete** — `set_lifecycle` with `lifecycle: deleted` **and `confirm`, the repository's name as the person
+  typed it** (with or without the org; the tool refuses the deletion without it, and you never fill it in for
+  them — ask for the name and pass it as given). The reconciler unfollows the repository's CircleCI project and
+  deletes the repository on GitHub — code, issues, pull requests, releases and packages with it; an organization
+  owner can restore it on GitHub for 90 days. **The entry stays in the team file as the record of the deletion.**
+  A repository that is already gone from GitHub (finding `repository-missing`) is recorded the same way. Say
+  what is lost before the dry run; an archive is the reversible alternative when the person hesitates.
 - **Transfer** — `transfer_repository` with the receiving team's slug: one pull request that moves the
   entry from the giving team's file into the receiving team's and names both teams. After the merge the
   reconciler re-applies permissions, CODEOWNERS and the catalog mapping for the new owner. A repository
@@ -65,7 +69,7 @@ The inventory carries the facts, not a verdict: each row of `list_repositories` 
 whether GitHub has the repository archived, the last commit by a person, the Renovate state, the finding kinds
 and the set-up state; `get_repository` has the full record. `describe_tool` names the filters (`scope`, `team`,
 `search`, `renovate`, `visibility`, `fork`, `lifecycle` — `active`, `deprecated`, `archived`, where archived on
-GitHub counts as archived — `archived`, `inactiveDays`, `finding`). Read the facts to the person and let them
+GitHub counts as archived, `deleted` — `archived` (archived or declared deleted), `inactiveDays`, `finding`). Read the facts to the person and let them
 judge: `inactiveDays` for repositories nobody committed to in a while, `renovate: inactive` for a configured but
 silent Renovate, `finding` for a specific gap. Scope the question: `mine` for the person's teams, `team` for one
 team, `unassigned` for repositories on GitHub without a declaration — those have no owner, no reconciler and no
