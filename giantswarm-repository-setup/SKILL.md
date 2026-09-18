@@ -2,7 +2,7 @@
 name: giantswarm-repository-setup
 description: Use when asked to create a Giant Swarm repository, to declare one or change its configuration in a team file of giantswarm/github, to read or explain a repository's set-up state (which step is red and what fixes it), or to align a repository now — through giantswarm-repo-manager's tools behind Muster, acting as the person. Carries the contract (the declaration is the desired state; validate → dry run → confirm → create; the two guards on machine approval) and the recipes to fetch the schema and the inventory live, never their contents.
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Repository set-up
@@ -82,14 +82,16 @@ catalog, release — with the last reconciler run. Read a red step in this order
 - **The check names its fix.** What the engine cannot repair it reports with the fix; say that first.
 - **Reality drifted from the declaration** (a hand change on GitHub, a lost CircleCI follow, a first
   release that never happened): `align_repository` — *Align now* — dispatches the reconciler for that
-  repository as the person. It changes the repository only for a team that has opted in (`alignOptIn:
-  true` in `repository-setup/team-<slug>.yaml`); for any other team the run checks, reports the drift and
-  changes nothing. `dryRun: true` answers with the mode (align or check), the opt-in, the planned changes
-  from the record's last check and a warning paragraph — show it to the person before they confirm
-  `mode: "commit"` (here: dispatch). Nothing is written to the team files and the standup channel hears
-  nothing about it: the record shows `setup.pendingRun` until the run's result lands as `setup.lastRun`
-  with its failed steps and findings; a run silent for 15 minutes leaves the finding
-  `reconcile-run-missing`. A repository **without an entry** needs `team`.
+  repository as the person. It changes the repository only when its entry says `align: true`; otherwise
+  the run checks, reports the drift and changes nothing, and the answer names the repository and how it
+  opts in — `update_repository` with `align: true` in its entry, reviewed by the team. A repository
+  created through the product carries the field from its creation. A repository **without an entry**
+  cannot opt in: the run needs `team` and only checks — declare the repository. `dryRun: true` answers
+  with the mode (align or check), the opt-in, the planned changes from the record's last check and a
+  warning paragraph — show it to the person before they confirm `mode: "commit"` (here: dispatch).
+  Nothing is written to the team files and the standup channel hears nothing about it: the record shows
+  `setup.pendingRun` until the run's result lands as `setup.lastRun` with its failed steps and findings;
+  a run silent for 15 minutes leaves the finding `reconcile-run-missing`.
 - **The declaration is wrong**: the fix is a field and lands through `update_repository`. The pipeline is
   derived from `gen.flavours`, `gen.language` and whether a `Dockerfile` sits at the repository root — no
   image job means no root Dockerfile, a chart job on a repository without a chart means the `app` flavour
@@ -98,11 +100,12 @@ catalog, release — with the last reconciler run. Read a red step in this order
 - **No team**: an undeclared repository (finding `undeclared-on-github`) has no reconciler until a team
   declares it; a declared repository gone from GitHub (`repository-missing`) is an entry a person removes.
 
-The nightly schedule repairs drift for the same opted-in teams (`alignOptIn: true`) and only checks the
-others. Read `repository-setup/team-<slug>.yaml` in `giantswarm/github` for a team's opt-in and its two
-channels: asks with an Approve button go to `slackChannel`; notices — who created, added, transferred,
-archived or deprecated a repository, a failed step, a finding of that person's run — to `standupChannel`.
-A run behind which nobody's change stands (an Align now, the schedule) posts nothing.
+The nightly schedule walks the opted-in entries (`align: true`) of every team file and repairs their
+drift; every other repository it only checks. The team's policy file `repository-setup/team-<slug>.yaml`
+in `giantswarm/github` names the team's two channels and holds no opt-in: asks with an Approve button go
+to `slackChannel`; notices — who created, added, transferred, archived or deprecated a repository, a
+failed step, a finding of that person's run — to `standupChannel`. A run behind which nobody's change
+stands (an Align now, the schedule) posts nothing.
 
 ## Rules of conduct
 
