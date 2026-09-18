@@ -2,7 +2,7 @@
 name: giantswarm-repository-setup
 description: Use when asked to create a Giant Swarm repository, to declare one or change its configuration in a team file of giantswarm/github, to read or explain a repository's set-up state (which step is red and what fixes it), or to align a repository now — through giantswarm-repo-manager's tools behind Muster, acting as the person. Carries the contract (the declaration is the desired state; validate → dry run → confirm → create; the two guards on machine approval) and the recipes to fetch the schema and the inventory live, never their contents.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Repository set-up
@@ -61,7 +61,13 @@ generated CI and Renovate do, `giantswarm-repository-ci-renovate`; how `filter_t
    otherwise the review the notice named; one sentence about the creation follows in the team's standup
    channel (`standupChannel`), with a sentence per failed step or finding of that run. A name that is
    taken (the repository exists, or redirects to a renamed one) is not a creation — it is a transfer or
-   a plain addition with the team's review.
+   a plain addition with the team's review. The pull request merging is not the repository done — that
+   is step 6.
+6. **Follow it to readiness with `watch_repository`** (`describe_tool` for its arguments and answer;
+   the pull request number is in `create_repository`'s own answer). Report each phase once as it
+   completes — created, scaffolded, declared, merged, setUp, released — and call the repository ready
+   only when the tool says `ready`; call it again while a phase is still pending. A failed phase names
+   the phase and the reason (a red first release names the job).
 
 Changing an existing repository's configuration is `update_repository` with the **whole entry** as it
 should read afterwards (not a patch — `get_repository` has the current one), validated against the
