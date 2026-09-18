@@ -2,7 +2,7 @@
 name: giantswarm-repository-lifecycle
 description: Use when asked to deprecate, archive, delete, hand over or transfer a Giant Swarm repository, to say who owns one, whose approval a team-file change needs and where the ask lands, or to find repositories that look abandoned or unowned (unassigned, inactive, archived on GitHub, findings) — through giantswarm-repo-manager's tools behind Muster, acting as the person.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Repository lifecycle and ownership
@@ -44,11 +44,14 @@ Only a *creation-only* pull request is machine-approved (`giantswarm-repository-
 ownership change is a person's decision, reviewed through `CODEOWNERS`:
 
 - deprecate, archive, a configuration change: the **owning team** — the ask goes to its Slack channel;
-- transfer: the **receiving team** approves in its channel; the giving team gets a notice.
+- transfer: the **receiving team** approves in its channel; the giving team gets a notice in its standup
+  channel.
 
-The channel is `slackChannel` in `repository-setup/team-<slug>.yaml` of `giantswarm/github`; read that file
-when the person asks where the ask went. A team without a file gets no message — the pull request is then
-reviewed on GitHub alone, and the person tells the team. A member approves with the Approve button of the
+Both channels are in `repository-setup/team-<slug>.yaml` of `giantswarm/github` — asks with an Approve
+button go to `slackChannel`, notices to `standupChannel`; read that file when the person asks where a
+message went. A team without a file gets no message — the pull request is then reviewed on GitHub alone,
+and the person tells the team. An undelivered ask is named in the tool's result; approving on GitHub is
+equivalent. A member approves with the Approve button of the
 Slack ask or with an approving review on GitHub; `approve_change` with the pull request number in
 `giantswarm/github` does the same from a chat, after the manager has confirmed on GitHub that the caller is a
 member of the team the change belongs to — a non-member is refused, and you never approve, merge or push

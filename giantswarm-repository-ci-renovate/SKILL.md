@@ -2,7 +2,7 @@
 name: giantswarm-repository-ci-renovate
 description: Use when a question is about a Giant Swarm repository's CI or Renovate — why it is not releasing or building, where its CircleCI pipeline, GitHub workflows, release workflow, Makefile or renovate.json5 come from, what Renovate's onboarding pull request means, how to change a generated file, or what devctl generates from the declaration. Carries the generation contract and the diagnosis order, never the generated content.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # CI and Renovate come from the declaration
@@ -41,8 +41,9 @@ repository's release workflow.
 - **Does the reconciler know the repository?** Undeclared (finding `undeclared-on-github`): nothing is
   generated and CircleCI is not followed by the automation — the fix is a declaration
   (`giantswarm-repository-setup`).
-- **Is CircleCI following it, with setup workflows on?** A red step in the set-up state; *Reconcile now*
-  (`reconcile_repository`) repairs it.
+- **Is CircleCI following it, with setup workflows on?** A red step in the set-up state; *Align now*
+  (`align_repository`) repairs it for a team that has opted in and reports the drift for any other — the
+  recipe and the opt-in rule are in `giantswarm-repository-setup`.
 - **Which release workflow is generated?** `gen.ci.releaseWorkflow` — `auto-release` tags from the
   conventional commits on every push to `main` (when no tag appeared, the workflow's run in the Actions
   tab says what it computed from the commits); `legacy` releases through the create-release-pr /
