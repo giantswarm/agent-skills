@@ -1,8 +1,8 @@
 ---
 name: giantswarm-repository-lifecycle
-description: Use when asked to deprecate, archive, delete, hand over or transfer a Giant Swarm repository, to say who owns one, whose approval a team-file change needs and where the ask lands, or to find repositories that look abandoned or unowned (unassigned, inactive, archived on GitHub, findings) — through giantswarm-repo-manager's tools behind Muster, acting as the person.
+description: Use when asked to deprecate, archive, delete, hand over or transfer a Giant Swarm repository, to adopt into a team one that exists on GitHub and no team file declares — alone or together with the lifecycle that ends it —, to say who owns one, whose approval a team-file change needs and where the ask lands, or to find repositories that look abandoned or unowned (unassigned, inactive, archived on GitHub, findings) — through giantswarm-repo-manager's tools behind Muster, acting as the person.
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # Repository lifecycle and ownership
@@ -10,9 +10,10 @@ metadata:
 Ownership and lifecycle are properties of the repository's entry in its team's file
 (`repositories/team-<slug>.yaml` in https://github.com/giantswarm/github): the owner is the file the entry
 lives in, the stage is `lifecycle`. Every change here is a team-file pull request opened as the person and
-approved by the team it concerns; nothing is done on GitHub by hand. Creating and configuring a repository
-and reading its set-up state is the `giantswarm-repository-setup` skill — it also has the recipes to find the
-manager's tools and to read the schema; Renovate and CI, `giantswarm-repository-ci-renovate`.
+approved by the team it concerns; nothing is done on GitHub by hand. Creating and configuring a repository,
+reading its set-up state and the entry to propose when adopting one is the `giantswarm-repository-setup`
+skill — it also has the recipes to find the manager's tools and to read the schema; Renovate and CI,
+`giantswarm-repository-ci-renovate`.
 
 ## What each change does
 
@@ -35,7 +36,18 @@ manager's tools and to read the schema; Renovate and CI, `giantswarm-repository-
 - **Transfer** — `transfer_repository` with the receiving team's slug: one pull request that moves the
   entry from the giving team's file into the receiving team's and names both teams. After the merge the
   reconciler re-applies permissions, CODEOWNERS and the catalog mapping for the new owner. A repository
-  that exists on GitHub but is declared by nobody is not transferred — it is added to the team's file.
+  that exists on GitHub but is declared by nobody is not transferred — it is adopted (below).
+- **Adopt** — `adopt_repository` with the adopting team's slug, the `entry` as it goes into the team file
+  and the person's `reason`: a repository that exists on GitHub and no team file declares (the inventory's
+  `unassigned` scope) gets its declaration in that team's file, in a pull request the team reviews — an
+  existing name is a plain addition, never machine-approved; the entry to propose and the `align`
+  question are in `giantswarm-repository-setup`. **Adopt and end** — `lifecycle: deprecated` or `archived`
+  in that entry: the one pull request declares the repository and ends its life, and the reconciler run of
+  the merge applies the lifecycle; the manager writes `align: true` beside it, as `set_lifecycle` does, and
+  the plan and the ask say so. Say what the lifecycle does (above) before the dry run, as for a declared
+  repository. `lifecycle: deleted` is refused there: adopt first, then `set_lifecycle` with the name typed.
+  Refused before any write when the name is free on GitHub (a creation) or declared already (the refusal
+  names the team and the tool to use).
 - **Back to production** — `update_repository` with the whole entry and `lifecycle` at its default.
 
 `reason` goes into the pull request body and the ask — always pass the person's why. An entry without
@@ -51,7 +63,9 @@ ownership change is a person's decision, reviewed through `CODEOWNERS`:
 
 - deprecate, archive, a configuration change: the **owning team** — the ask goes to its Slack channel;
 - transfer: the **receiving team** approves in its channel; the giving team gets a notice in its standup
-  channel.
+  channel;
+- adopt, with or without a lifecycle in the entry: the **adopting team** — the ask goes to its channel and a
+  member other than the person approves; the pull request carries auto-merge and lands on that approval.
 
 Both channels are in `repository-setup/team-<slug>.yaml` of `giantswarm/github` — asks with an Approve
 button go to `slackChannel`, notices to `standupChannel`; read that file when the person asks where a
@@ -74,6 +88,9 @@ judge: `inactiveDays` for repositories nobody committed to in a while, `renovate
 silent Renovate, `finding` for a specific gap. Scope the question: `mine` for the person's teams, `team` for one
 team, `unassigned` for repositories on GitHub without a declaration — those have no owner, no reconciler and no
 channel, and Renovate's onboarding pull requests on them are the visible sign (`giantswarm-repository-ci-renovate`).
+The way on for one of them is `adopt_repository`: into the team whose work it is, or with the lifecycle that
+ends it.
 
 There is no note to leave on a record. A repository that stays as it is needs nothing; any other outcome is a
-lifecycle change or a transfer above, with the review it needs, and takes effect through its pull request.
+lifecycle change, a transfer or an adoption above, with the review it needs, and takes effect through its pull
+request.
