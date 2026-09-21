@@ -23,8 +23,8 @@ copies of it, and each owns one topic.
 
 | Skill | For |
 |---|---|
-| `giantswarm-repository-setup` | Declaring a repository in its team file of `giantswarm/github` as desired state: the creation flow (validate, dry run, confirm, create as the person), the two guards on machine approval, the set-up state and the knob that fixes a red step, *Align now* |
-| `giantswarm-repository-lifecycle` | Deprecate, archive, transfer — what each pull request changes, whose review it needs and where the ask lands; that deletion does not exist; finding abandoned or unowned repositories from the inventory's facts |
+| `giantswarm-repository-setup` | Declaring a repository in its team file of `giantswarm/github` as desired state: the creation flow (validate, dry run, confirm, create as the person), adopting a repository that no team file declares (the entry from what GitHub knows, the `align` question, the team's review), the two guards on machine approval, the set-up state and the knob that fixes a red step, *Align now* |
+| `giantswarm-repository-lifecycle` | Deprecate, archive, delete, transfer, adopt an undeclared repository alone or with the lifecycle that ends it — what each pull request changes, whose review it needs and where the ask lands; finding abandoned or unowned repositories from the inventory's facts |
 | `giantswarm-repository-ci-renovate` | Where a repository's CI, release workflow and Renovate config come from (`devctl gen` through the declaration), the "why is it not releasing" diagnosis order, Renovate's onboarding pull request, generated files never hand-edited |
 
 The three follow the same standard: the schema is read from `giantswarm/github`, the inventory and the

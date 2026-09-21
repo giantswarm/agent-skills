@@ -1,8 +1,8 @@
 ---
 name: giantswarm-repository-setup
-description: Use when asked to create a Giant Swarm repository, to declare one or change its configuration in a team file of giantswarm/github, to read or explain a repository's set-up state (which step is red and what fixes it), or to align a repository now — through giantswarm-repo-manager's tools behind Muster, acting as the person. Carries the contract (the declaration is the desired state; validate → dry run → confirm → create; the two guards on machine approval) and the recipes to fetch the schema and the inventory live, never their contents.
+description: Use when asked to create a Giant Swarm repository, to adopt one that exists on GitHub and no team file declares, to declare one or change its configuration in a team file of giantswarm/github, to read or explain a repository's set-up state (which step is red and what fixes it), or to align a repository now — through giantswarm-repo-manager's tools behind Muster, acting as the person. Carries the contract (the declaration is the desired state; validate → dry run → confirm → create, or dry run → confirm → adopt; the two guards on machine approval) and the recipes to fetch the schema and the inventory live, never their contents.
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # Repository set-up
@@ -12,9 +12,10 @@ https://github.com/giantswarm/github. The entry is the desired state: the reconc
 repository running the devctl engine) creates the repository from it and keeps its settings, branch
 protection, CircleCI project, Renovate, CODEOWNERS, catalog entry and first release true to it. Everything
 you do here is a change to that file, opened as a pull request **as the person** — never a hand change on
-GitHub. Deprecating, archiving and transferring is the `giantswarm-repository-lifecycle` skill; what the
-generated CI and Renovate do, `giantswarm-repository-ci-renovate`; how `filter_tools`, `describe_tool` and
-`call_tool` work, `agent-platform-tools`.
+GitHub. Deprecating, archiving, deleting and transferring — and adopting a repository together with the
+lifecycle that ends it — is the `giantswarm-repository-lifecycle` skill; what the generated CI and Renovate
+do, `giantswarm-repository-ci-renovate`; how `filter_tools`, `describe_tool` and `call_tool` work,
+`agent-platform-tools`.
 
 ## Fetch first, never recall
 
@@ -60,9 +61,10 @@ generated CI and Renovate do, `giantswarm-repository-ci-renovate`; how `filter_t
 5. **Answer with the pull request URL** and what happens next: creation-only merges by itself,
    otherwise the review the notice named; one sentence about the creation follows in the team's standup
    channel (`standupChannel`), with a sentence per failed step or finding of that run. A name that is
-   taken (the repository exists, or redirects to a renamed one) is not a creation — it is a transfer or
-   a plain addition with the team's review. The pull request merging is not the repository done — that
-   is step 6.
+   taken (the repository exists, or redirects to a renamed one) is not a creation, and
+   `create_repository` refuses it: declared by a team, it is a transfer or a configuration change;
+   declared by nobody, it is an adoption (below) — the refusal names `adopt_repository`. The pull request
+   merging is not the repository done — that is step 6.
 6. **Follow it to readiness with `watch_repository`** (`describe_tool` for its arguments and answer;
    the pull request number is in `create_repository`'s own answer). Report each phase once as it
    completes — created, scaffolded, declared, merged, setUp, released — and call the repository ready
@@ -72,6 +74,37 @@ generated CI and Renovate do, `giantswarm-repository-ci-renovate`; how `filter_t
 Changing an existing repository's configuration is `update_repository` with the **whole entry** as it
 should read afterwards (not a patch — `get_repository` has the current one), validated against the
 schema and reviewed by the team.
+
+## Adopting a repository that no team file declares
+
+A repository that exists on GitHub and no team file declares — the inventory's `unassigned` scope, the
+finding `undeclared-on-github` — has no owner, no reconciler and no channel. `adopt_repository` declares it:
+`repository`, the adopting team's slug, the `entry` as it goes into the team file (`name` may be left out)
+and the person's `reason`. It is a creation without the create and scaffold steps: the entry is rendered
+with the schema's defaults the way a creation is, validated against the schema alone — the creation rules
+are for repositories the manager creates — and added to the team's file by the pull request. Two
+differences to know before the dry run:
+
+- **The entry describes what is there.** Propose it from the repository on GitHub rather than ask:
+  `description` and `visibility` as they are, `componentType` and `gen.language` from what the repository
+  is, and no `gen.ci.generate` unless the person asks for generated CI — an adopted repository keeps its own
+  CircleCI configuration (what the `gen` block generates is `giantswarm-repository-ci-renovate`). `align`
+  is the person's to set, and the one question when they say nothing about it: with `align: true` the
+  reconciler run of the merge aligns the repository with its declared set-up and the company baseline;
+  without it that run checks the repository and reports the drift, changing nothing. The pull request
+  body says what the merge does either way.
+- **The team reviews it.** An existing name is a plain addition, never creation-only: the pull request
+  opens as the person with auto-merge armed and the ask with the Approve button goes to the team's
+  `slackChannel`; a member other than the person approves, and the merge follows. Nothing is dispatched.
+  The record shows `setup.pendingRun` until the reconciler run of the merge has reported, then
+  `get_repository` says what it did; `watch_repository` follows creations, not adoptions.
+
+`dryRun: true` answers with the rendered entry, the pull request and the ask (who approves, in which
+channel); show it and every refusal as the tool returns it — a name free on GitHub is a creation
+(`create_repository`), a name a team file declares already names that team and the tool to use
+(`update_repository`, `transfer_repository`, `set_lifecycle`) — and call `mode: "commit"` only after the
+person confirms. `lifecycle: deprecated` or `archived` in the entry adopts the repository and ends its
+life in the one pull request; `deleted` is refused there — the contract is in `giantswarm-repository-lifecycle`.
 
 ## Set-up state: a red step and the knob that fixes it
 
@@ -90,7 +123,8 @@ catalog, release — with the last reconciler run. Read a red step in this order
     the person approves — and the reconciler aligns the repository when the pull request merges. A
     repository created through the product carries the field from its creation.
   - `check` — the repository has **no entry**: it cannot opt in; the run needs `team` and only checks,
-    reporting the drift — declare the repository.
+    reporting the drift — adopt the repository (`adopt_repository`, with `align: true` when the drift is
+    to be repaired).
 
   `dryRun: true` answers with the mode, the opt-in, the planned changes from the record's last check and
   a warning paragraph; for `opt-in` also the entry as it will read, the pull request and the ask (who
@@ -105,7 +139,8 @@ catalog, release — with the last reconciler run. Read a red step in this order
   should go, the release workflow follows `gen.ci.releaseWorkflow`; the field descriptions in the schema
   say what each knob does, `giantswarm-repository-ci-renovate` has the diagnosis order.
 - **No team**: an undeclared repository (finding `undeclared-on-github`) has no reconciler until a team
-  declares it; a declared repository gone from GitHub (`repository-missing`) is an entry a person removes.
+  adopts it (`adopt_repository`); a declared repository gone from GitHub (`repository-missing`) is a
+  deletion to record (`giantswarm-repository-lifecycle`).
 
 The nightly schedule walks the opted-in entries (`align: true`) of every team file and repairs their
 drift; every other repository it only checks. The team's policy file `repository-setup/team-<slug>.yaml`
