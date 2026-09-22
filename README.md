@@ -34,9 +34,9 @@ tools from giantswarm-repo-manager through Muster, and no list of fields or tool
 
 | Skill | For |
 |---|---|
-| `giantswarm-platform-installations` | The vocabulary — installation, platform capability, capability definition, the installation opt-in — and how to read a state and a refusal (*not opted in*, `auth_required`); `get_info`, `list_installations`, `verify_capability` |
+| `giantswarm-platform-installations` | The vocabulary — installation, platform capability, capability definition, the manager's two registrations — and how to read a state (*enabled* is the fileset on record, whoever put it there) and a refusal (`auth_required`, the commit's gate, `commitRefused`); `get_info`, `list_installations`, `verify_capability`, `verify_installation` |
 | `giantswarm-platform-capability-enablement` | `enable_capability` and `reconcile_capability`: a dry run first, how to present it (files per repository, pull requests, secrets by name, Dex clients, customer actions, the wave and the skipped), the person's confirmation, then one `commit`; never a loop of the agent's own |
-| `giantswarm-platform-actions` | The action and its approval — who approves, where the ask lands, the rollout, the probes and the report — and how to read a record through `get_action` and `list_actions` |
+| `giantswarm-platform-actions` | The action and its approval — who approves, where the ask lands, the actor's `merge_action`, the `watch_action` that carries a rollout to its report — and how to read a record through `get_action` and `list_actions`, *refused*, *denied* and *removed* included |
 
 The three follow the same standard: the definitions and their input schemas come from the manager's
 `get_info`, the tools from `describe_tool`, the installations and their states from `list_installations`,
