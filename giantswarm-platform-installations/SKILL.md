@@ -2,7 +2,7 @@
 name: giantswarm-platform-installations
 description: Use when a question is about the installations Giant Swarm operates and their platform capabilities — which installations exist, whether one has a capability such as the Agent Platform enabled, what state a capability is in and why, what a capability definition is and which inputs it takes, or whether an installation still matches its definition, in its repositories and on its running cluster (verify) — through giantswarm-platform-manager's tools behind Muster, acting as the person. Carries the vocabulary, how to read a state and a refusal, and the fetch recipes (get_info, list_installations, verify_capability, verify_installation); never a list of installations, capabilities, inputs or states.
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Installations and their platform capabilities
@@ -14,21 +14,23 @@ every call — with its two GitOps repositories, the configuration one and the m
 described by exactly one **capability definition**: a closed set of typed inputs that renders into files of
 those repositories, Dex clients, generated secrets, customer actions and probes. The manager
 (`giantswarm-platform-manager`) reads and renders as the person and writes only through pull requests in the
-person's name. Behind Muster it is two registrations: `x_giantswarm-platform-manager_*` reads the record and
-the actions, `x_giantswarm-platform-manager-live_*` reads the running cluster as the person. Enabling or
-reconciling a capability is the `giantswarm-platform-capability-enablement` skill; an action's approval,
-rollout and report, `giantswarm-platform-actions`; how `filter_tools`, `describe_tool` and `call_tool` work,
-`agent-platform-tools`; what the Agent Platform itself is, `agent-platform-overview`.
+person's name. Behind Muster it is one server, `giantswarm-platform-manager`, and every tool is
+`x_giantswarm-platform-manager_*`; Muster forwards the person's platform identity next to the App token
+(`auth.forwardIdentity`), so the cluster reads — `verify_installation`, `watch_action` — read the installation
+as the person. Enabling or reconciling a capability is the `giantswarm-platform-capability-enablement` skill;
+an action's approval, rollout and report, `giantswarm-platform-actions`; how `filter_tools`, `describe_tool`
+and `call_tool` work, `agent-platform-tools`; what the Agent Platform itself is, `agent-platform-overview`.
 
 ## Fetch first, never recall
 
-- **The tools**: `filter_tools {"pattern": "x_giantswarm-platform-manager*"}` finds both registrations; then
+- **The tools**: `filter_tools {"pattern": "x_giantswarm-platform-manager_*"}` finds every tool; then
   `describe_tool` on the one you are about to call — every argument, mode and result field is in its schema,
   which changes faster than any skill. Never call a tool you have not described in this conversation.
 - **`get_info` opens every conversation**: whose GitHub grant your calls carry (the caller), the hub
   installation, the registry it reads, the capability definitions with their input schemas, and what the
-  manager is configured for — whether it can commit, whether the action record is readable, whether the
-  live registration serves. Answer "which capabilities exist" and "what can I set" from it and only from it.
+  manager is configured for — whether it can commit, whether the action record is readable, whether the call
+  carried the person's forwarded identity (`live`). Answer "which capabilities exist" and "what can I set"
+  from it and only from it.
 - **The installations and their states**: `list_installations` — every installation of the registry with
   its record (the facts the definitions take as `installation.*` inputs) and, per capability, the state, the
   inputs on record and the last action. Every repository is read as the person at call time, so a change on
@@ -39,14 +41,14 @@ rollout and report, `giantswarm-platform-actions`; how `filter_tools`, `describe
 - **What is really configured**: two reads, one answer. `verify_capability` compares the installation's
   repositories with the definition — grouped into the definition's features, one mark each (*as defined*,
   *planned*, *differs by input*, *drifted*), every difference named by file, path and the input that drives
-  it. `verify_installation`, on the live registration, checks the running cluster against the definition's
-  probes, read through Muster's kubernetes tools as the person: an object they may not read is *not checked,
-  forbidden for them*, never a failure of the installation. Each reports the other's dimensions as *not
-  checked* there: `verify_capability`'s *needs your session on the installation* is the pointer to
-  `verify_installation`, not a missing sign-in. Call them in order, never in parallel: `verify_capability`
-  first, then `verify_installation` with the `inputs` object of its answer, so both halves render from the
-  same inputs. Present the two together; a dimension the live call leaves *not checked* carries the reason
-  that call gives, word for word — never one of your own.
+  it. `verify_installation` checks the running cluster against the definition's probes, read through Muster's
+  kubernetes tools as the person: an object they may not read is *not checked, forbidden for them*, never a
+  failure of the installation. Each reports the other's dimensions as *not checked* there:
+  `verify_capability`'s *needs your session on the installation* is the pointer to `verify_installation`, not
+  a missing sign-in. Call them in order, never in parallel: `verify_capability` first, then
+  `verify_installation` with the `inputs` object of its answer, so both halves render from the same inputs.
+  Present the two together; a dimension the live call leaves *not checked* carries the reason that call gives,
+  word for word — never one of your own.
 
 ## Reading a state
 
@@ -60,18 +62,19 @@ state: *pending approval*, *rolling out*, *waiting for the customer*, *drifted*,
 
 ## Reading a refusal
 
-- **`auth_required`** from Muster: the person is not signed in to that registration. The manager knows the
-  person through the GitHub App its server is pinned to, so this is the person's own connection — hand them
-  the sign-in link (`core_auth_login` for the server the refusal names, `giantswarm-platform-manager` or
-  `giantswarm-platform-manager-live`) and stop. Do not retry, do not call another tool in its place, do not
+- **`auth_required`** from Muster: the person has not given the App consent. The manager knows the person
+  through the GitHub App its server is pinned to, and no tool answers, the cluster reads included, before the
+  person has connected `giantswarm-platform-manager` in Muster — hand them the sign-in link (`core_auth_login`
+  for `giantswarm-platform-manager`) and stop. Do not retry, do not call another tool in its place, do not
   present the refusal as an empty result. A tool error saying it *needs a caller* is the same situation; a
-  live read that answers with Muster's own sign-in means the person is not connected to that installation.
+  cluster read that answers with Muster's own sign-in means the person is not connected to that installation.
 - **A 403 or 404 on the registry**: the manager's App is not installed on the registry repository, or the
   person cannot read it; the error names the requirement. Nothing to work around.
 - **A spent GitHub quota**: every read runs on the person's own GitHub quota, shared with their other
   clients; the refusal names the reset time. Say when it resets and stop — never retry in a loop.
-- **A missing hub, action namespace or live path** reported by `get_info` is the manager's configuration,
-  not the person's; say so and name what `get_info` reports.
+- **A missing hub, action namespace or forwarded identity** reported by `get_info`, or a cluster read refused
+  naming `X-Muster-Id-Token` and `auth.forwardIdentity`, is the configuration of the manager or its Muster
+  server, not the person's; say so and name what the answer reports.
 - **A commit refused at the gate** — the installation unreadable as the person, or without repositories on
   record — is recorded as an action in state *refused*, and the files' state stands. A prerequisite the
   definition names (a version the installation runs, the chart line its record selects, an API its cluster
