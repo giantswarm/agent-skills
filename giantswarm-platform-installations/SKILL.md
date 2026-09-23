@@ -2,7 +2,7 @@
 name: giantswarm-platform-installations
 description: Use when a question is about the installations Giant Swarm operates and their platform capabilities — which installations exist, whether one has a capability such as the Agent Platform enabled, what state a capability is in and why, what a capability definition is and which inputs it takes, or whether an installation still matches its definition, in its repositories and on its running cluster (verify) — through giantswarm-platform-manager's tools behind Muster, acting as the person. Carries the vocabulary, how to read a state and a refusal, and the fetch recipes (get_info, list_installations, verify_capability, verify_installation); never a list of installations, capabilities, inputs or states.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Installations and their platform capabilities
@@ -31,7 +31,8 @@ rollout and report, `giantswarm-platform-actions`; how `filter_tools`, `describe
   live registration serves. Answer "which capabilities exist" and "what can I set" from it and only from it.
 - **The installations and their states**: `list_installations` — every installation of the registry with
   its record (the facts the definitions take as `installation.*` inputs) and, per capability, the state, the
-  inputs on record and the last action. Filter by name or customer; an unknown name is an error, not an
+  inputs on record and the last action. Every repository is read as the person at call time, so a change on
+  a default branch is in the next answer. Filter by name or customer; an unknown name is an error, not an
   empty list. `summary: true` answers the states and the last actions alone — the call for an overview. The
   result's `states` field names every state with its source, and its `unreadable` list names the
   installations whose repositories the person cannot read.
@@ -63,6 +64,8 @@ state: *pending approval*, *rolling out*, *waiting for the customer*, *drifted*,
   live read that answers with Muster's own sign-in means the person is not connected to that installation.
 - **A 403 or 404 on the registry**: the manager's App is not installed on the registry repository, or the
   person cannot read it; the error names the requirement. Nothing to work around.
+- **A spent GitHub quota**: every read runs on the person's own GitHub quota, shared with their other
+  clients; the refusal names the reset time. Say when it resets and stop — never retry in a loop.
 - **A missing hub, action namespace or live path** reported by `get_info` is the manager's configuration,
   not the person's; say so and name what `get_info` reports.
 - **A commit refused at the gate** — the installation unreadable as the person, or without repositories on

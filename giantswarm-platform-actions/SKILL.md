@@ -2,7 +2,7 @@
 name: giantswarm-platform-actions
 description: Use when a question is about an action of giantswarm-platform-manager — what happened after a commit, whether an enablement or a reconcile was approved, merged, rolled out or verified, why an installation is pending approval, rolling out, waiting for the customer, drifted or failed, why an action reads refused, denied or removed, who approves an action and where the ask lands, who merges and who watches the rollout, what a report says, or the history of actions on an installation — get_action, list_actions, merge_action and watch_action behind Muster, acting as the person. Carries the action's life, the approval's rules and how to read a record; never a list of actions, teams or channels.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Actions: approval, rollout and report
@@ -22,13 +22,15 @@ skill; `describe_tool` before the first call, as everywhere.
    and asked for the **action approval**: one review in the channel of the team that owns the capability
    definition — a line saying who asks to enable or reconcile which capability on which installations, the
    pull requests as its links, an Approve and a Deny button; a notice without buttons goes to a second
-   channel when a customer installation is a target. A member of the owning team approves once, and the
+   channel when a customer installation is a target, naming the account engineer the catalog records for
+   it. A member of the owning team approves once, and the
    manager submits an approving review on every pull request of the action as that member. The actor cannot
    approve their own action — four eyes, refused before it is asked. Deny records a reason, closes the pull
    requests and ends the action as *denied*; the actor may withdraw their own that way. The buttons are
    `approve_action` and `deny_action`, called as the clicking member; you press neither.
 2. **Rolling out.** The merge is the actor's call, `merge_action`: each pull request once its checks are
-   green, in dependency order; called before the approval it answers what the action waits for. The
+   green, in dependency order; called before the approval it answers what the action waits for, posts the
+   review when none is up and re-posts it when the gateway no longer holds it. The
    repositories' CI validates, Flux reconciles. The watch is a call too — `watch_action` on the live
    registration, by anyone signed in: it reads the Flux objects the definition names on the installation
    rolling out, as the person calling, and answers the picture as it is; nothing is waited for or hurried.
