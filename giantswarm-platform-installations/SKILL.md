@@ -42,7 +42,10 @@ rollout and report, `giantswarm-platform-actions`; how `filter_tools`, `describe
   it. `verify_installation`, on the live registration, checks the running cluster against the definition's
   probes, read through Muster's kubernetes tools as the person: an object they may not read is *not checked,
   forbidden for them*, never a failure of the installation. Each reports the other's dimensions as *not
-  checked* there; present the two together.
+  checked* there: `verify_capability`'s *needs your session on the installation* is the pointer to
+  `verify_installation`, not a missing sign-in. Call both — the live one with the `inputs` object of the
+  repository answer, so both halves render from the same inputs — and present the two together; only what
+  the live call itself leaves *not checked*, with its reason, stays so.
 
 ## Reading a state
 
