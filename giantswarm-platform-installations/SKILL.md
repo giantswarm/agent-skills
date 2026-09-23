@@ -43,9 +43,10 @@ rollout and report, `giantswarm-platform-actions`; how `filter_tools`, `describe
   probes, read through Muster's kubernetes tools as the person: an object they may not read is *not checked,
   forbidden for them*, never a failure of the installation. Each reports the other's dimensions as *not
   checked* there: `verify_capability`'s *needs your session on the installation* is the pointer to
-  `verify_installation`, not a missing sign-in. Call both — the live one with the `inputs` object of the
-  repository answer, so both halves render from the same inputs — and present the two together; only what
-  the live call itself leaves *not checked*, with its reason, stays so.
+  `verify_installation`, not a missing sign-in. Call them in order, never in parallel: `verify_capability`
+  first, then `verify_installation` with the `inputs` object of its answer, so both halves render from the
+  same inputs. Present the two together; a dimension the live call leaves *not checked* carries the reason
+  that call gives, word for word — never one of your own.
 
 ## Reading a state
 
