@@ -30,6 +30,12 @@ runtime hands the error back for the next attempt, the Python runtime ends the t
 `invocation` field repeats this for every tool. Arguments follow the tool's `inputSchema`, so read
 `describe_tool` before the first call of a tool you have not used.
 
+The reverse holds too: the meta-tools and the runtime's built-ins (`load_skill`, `read_file`, `bash`, …)
+are functions, never a `name` for `call_tool` — `call_tool {"name": "filter_tools"}` or
+`{"name": "call_tool"}` is refused as outside the toolset, and `describe_tool` knows catalogue tools
+only. `arguments` carries exactly the tool's `inputSchema` properties, with every required one set;
+never nest a second `name`/`arguments` pair inside it.
+
 **Name shapes.** `x_<server>_<tool>` is an external MCP server's tool, prefixed with the server's
 registered name; `core_<area>_<tool>` is one of Muster's own; `workflow_<name>` is a workflow. Servers in
 a **family** (one instance per management cluster — the infrastructure servers) appear once under the
