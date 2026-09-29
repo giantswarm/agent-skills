@@ -46,14 +46,17 @@ applies it, and its `sourceRef` is the repository. The portal shows the Git sour
 ## Working with agent-manager
 
 agent-manager's tools are `x_agent-manager_*` through `call_tool`, acting as the person
-(`writesAsCaller`). Discover them live with `filter_tools` (`pattern`) and read each schema with
-`describe_tool` before the first call; never assume an argument. `get_info` comes first. Model
-configs come from `workflow_model-overview` (or `list_model_configs`), skills from `list_skills`,
-which also shows the head commit a pin resolves to and each skill's description — a skill you
-assign is judged from that listing, never loaded (`load_skill` knows only your own skills). Then `validate_agent` → `create_agent` →
-`workflow_agent-status` until `ready` (about a minute; the golden snapshot is the long part) → a
-first turn as the person → `update_agent` for follow-ups. `update_agent` replaces `skills` and
-`toolset` as whole lists; `refreshSkills: true` re-pins every git skill to its default-branch
+(`writesAsCaller`). The `name` you pass is always the full catalogue name, as `filter_tools` returns
+it — `x_agent-manager_list_agents`, never `list_agents`; a short name is refused as outside the
+toolset. Discover them live with `filter_tools` (`pattern`) and read each schema with
+`describe_tool` before the first call; never assume an argument. `x_agent-manager_get_info` comes
+first. Model configs come from `workflow_model-overview` (or `x_agent-manager_list_model_configs`),
+skills from `x_agent-manager_list_skills`, which also shows the head commit a pin resolves to and
+each skill's description — a skill you assign is judged from that listing, never loaded
+(`load_skill` knows only your own skills). Then `x_agent-manager_validate_agent` →
+`x_agent-manager_create_agent` → `workflow_agent-status` until `ready` (about a minute; the golden
+snapshot is the long part) → a first turn as the person → `x_agent-manager_update_agent` for
+follow-ups. `x_agent-manager_update_agent` replaces `skills` and `toolset` as whole lists; `refreshSkills: true` re-pins every git skill to its default-branch
 head. A GitOps agent re-pins through a commit that changes the pinned commit.
 
 ## The rules the tools do not tell you
