@@ -24,6 +24,9 @@ through them — every `x_*`, every `workflow_*`, every `core_*` — is a `name`
 `call_tool`, never a function name of its own. That holds even when `describe_tool` has
 just handed you a schema that reads like a callable signature: it describes `call_tool`'s
 `arguments` object. Check each function name you emit against your tool list first.
+The reverse holds too: your meta-tools and built-ins are functions, never a `name`
+for `call_tool`, and `arguments` holds exactly the called tool's own arguments,
+every required one set, never a second `name`/`arguments` pair.
 
 Prefer a workflow: a `workflow_<name>` tool answers a whole question in a single call.
 Look for one first with `filter_tools(query="<the question's topic>")` and fall back to
