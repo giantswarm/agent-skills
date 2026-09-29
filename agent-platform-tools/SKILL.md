@@ -25,7 +25,8 @@ your own MCP tool list; the reference page documents each.
 
 **The `call_tool` contract.** Every tool behind Muster runs as
 `call_tool {"name": "<exact name>", "arguments": {…}}` — the name is a string argument, never a function
-of its own. A model that emits `x_kubernetes_list` as a function name gets "tool not found": the Go
+of its own, and always the full catalogue name as `filter_tools` returns it (`x_agent-manager_list_agents`,
+never `list_agents`): a short name from a skill, a prompt or memory is refused as outside the toolset. A model that emits `x_kubernetes_list` as a function name gets "tool not found": the Go
 runtime hands the error back for the next attempt, the Python runtime ends the turn. `describe_tool`'s
 `invocation` field repeats this for every tool. Arguments follow the tool's `inputSchema`, so read
 `describe_tool` before the first call of a tool you have not used.

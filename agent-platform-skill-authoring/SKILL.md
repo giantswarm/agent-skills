@@ -61,9 +61,9 @@ live when it merges. Pinning and re-pinning are the composers' job — the porta
 agent-manager's write tools, a GitOps commit — and belong to the `agent-platform-agent-management`
 skill (the portal flow: https://docs.giantswarm.io/tutorials/agent-platform/create-an-agent/).
 
-The repositories an installation offers and each skill's head commit are live data: agent-manager's
-`get_info` and `list_skills` through `call_tool`. Any other public repository works by `url` and
-`path`; it is only not offered. A **private** repository needs a GitOps release with
+The repositories an installation offers and each skill's head commit are live data:
+`x_agent-manager_get_info` and `x_agent-manager_list_skills` through `call_tool`. Any other public
+repository works by `url` and `path`; it is only not offered. A **private** repository needs a GitOps release with
 `skillsGitAuthSecretRef.name` (a Secret in the agent's namespace, key `token`) — the portal and
 agent-manager pass no credential, so a private skill chosen there never boots.
 
@@ -72,8 +72,8 @@ agent-manager pass no credential, so a private skill chosen there never boots.
 1. **Fetch live, never copy.** Before every line ask: can the agent fetch this? If yes, write the
    one-line recipe, not the content. Custom resources and `HelmRelease`s are read with
    `x_kubernetes_*`; tool names, arguments and what a preset resolves to come from `filter_tools`
-   and `describe_tool`; the agent chart's values schema from agent-manager's `get_info` and
-   `validate_agent`; the state of an agent or the platform from a `workflow_<name>` (the
+   and `describe_tool`; the agent chart's values schema from `x_agent-manager_get_info` and
+   `x_agent-manager_validate_agent`; the state of an agent or the platform from a `workflow_<name>` (the
    `agent-platform-tools` skill has the discovery recipe). Tables of tools, values, presets,
    servers or failure modes go stale faster than you can think and cost context on every turn.
 2. **Trigger, not summary.** The description answers "when do I load this?"; the body says what the
