@@ -42,5 +42,15 @@ The three follow the same standard: the definitions and their input schemas come
 `get_info`, the tools from `describe_tool`, the installations and their states from `list_installations`,
 and no list of installations, inputs, files or tools is copied into a skill.
 
+## Skills for the Cluster Manager agent
+
+| Skill | For |
+|---|---|
+| `giantswarm-cluster-management` | Creating and deleting workload clusters and their GPU node pools through cluster-manager, as the person: `get_info` first, a dry run, the person's confirmation, then one call; apply or commit (a pull request in the person's name); every refusal with its way out; a removal's live step |
+
+It follows the same standard: the tools, their arguments and modes come from cluster-manager's `get_info` and
+`describe_tool`, the releases and clusters from its reads, and no list of tools, releases or clusters is copied
+into the skill.
+
 The remaining directories are demo and domain skills (`incident-response`, `k8s-debugging`,
 `postmortems`, `agent-self-awareness`, and the fictional customers' data skills).
