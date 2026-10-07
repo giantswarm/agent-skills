@@ -61,9 +61,8 @@ The portal, the presets and the docs use the same three names:
 - **Developer portal** → Agent Platform → Agents: pick an agent, start a session, watch the tool calls,
   answer its questions; sessions are private to the signed-in person. Every installation has a portal;
   Giant Swarm's is https://devportal.giantswarm.io (https://docs.giantswarm.io/overview/developer-portal/agent-platform/).
-- **Slack**: on the Giant Swarm installation the **Swarmgeist** app — `@Swarmgeist <question>` reaches the
-  default agent, `@Swarmgeist /agent "<display name>" <question>` a named one, `/agent` alone lists them;
-  one thread is one session; a one-time *Sign in to Giant Swarm* links the Slack account to the person.
+- **Slack**: on the Giant Swarm installation the **Swarmgeist** app — `/swarmgeist <question>` allows to
+  select an agent; one thread is one session; a one-time *Sign in to Giant Swarm* links the Slack account to the person.
 - **IDE and CLI**: Claude Code, Cursor, VS Code, the `muster` CLI and any MCP client with remote OAuth
   connect to `https://muster.<installation>.<base domain>/mcp`, the endpoint the agents use too
   (https://docs.giantswarm.io/getting-started/ai-agent-setup/).
