@@ -1,6 +1,6 @@
 ---
 name: monitoring-analysis
-description: Use this skill when analysing monitoring data — metrics, logs, Alertmanager state — for a workload or alert: picking the right series, reading patterns (OOM sawtooth, scrape dips), correlating logs with metric events, and presenting findings as evidence.
+description: "Use this skill when analysing monitoring data — metrics, logs, Alertmanager state — for a workload or alert: picking the right series, reading patterns (OOM sawtooth, scrape dips), correlating logs with metric events, and presenting findings as evidence."
 metadata:
   version: "0.1.0"
 ---
