@@ -1,8 +1,8 @@
 ---
 name: alert-review
-description: Use this skill to run a periodic (weekly) alert review — "review last week's alerts", "alert review", "what paged us and why" — over PagerDuty incidents, the Slack discussions around them, and monitoring evidence. Starts with a compact overview; drills into an incident when asked.
+description: Use this skill to run a periodic (weekly) alert review — "review last week's alerts", "alert review", "what paged us and why" — over PagerDuty incidents, the Slack discussions around them, and monitoring evidence. Starts with a glanceable alert table; drills into an incident when asked.
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Alert review
@@ -21,14 +21,16 @@ the user explicitly asks.
 
 ## Interaction contract
 
-**First answer: overview only.**
-- One headline sentence.
-- The week's numbers: total pages, resolved / acknowledged / still open,
-  recurring vs one-off vs noise.
-- The 2–3 spots worth drilling into, one line each, with the why
-  ("billing-engine OOM — 4th page this week, fix agreed but never applied").
+**First answer: one headline sentence + the alert table.**
+- One row per alert group (alertname + cluster), covering **every** group in
+  the window — resolved and noise included.
+- Columns: alert · cluster · pages · state (open/ack/resolved/silenced) ·
+  one-phrase context ("recurring — fix agreed, never applied",
+  "silenced until <date> (SIL-7F2A)", "auto-resolved blips").
+- Order: needs-a-look first (open, recurring, silenced-but-masking), noise
+  last; lead needs-a-look rows with ⚠.
 - End by offering drill-down ("Ask me about any of these").
-- No tables, no per-incident analysis, no metric dumps.
+- Banned in the first answer: per-incident analysis, metric dumps.
 
 **Drill-down only on request.** When the person names an alert or incident,
 analyse that one: what Slack concluded, the correlated metrics/logs,
@@ -42,10 +44,11 @@ still condensed — counts and evidence, no narration.
    review needs the noise too. Group by `alertname` + `cluster`:
    *recurring* (≥3, same shape), *one-off significant* (long or multi-alert),
    *noise* (short-lived, auto-resolved, no discussion).
-3. **Headline candidates.** For the 2–3 non-noise groups, skim
-   `x_slack_list_channels` (incident channels `inc-<date>-<slug>`, feeds
-   `alerts-<cluster>`) and `get_channel_history` just enough for the one-line
-   why. Save the rest for drill-down.
+3. **Row context.** Per non-noise group, one bounded skim for the one-phrase
+   context: `x_slack_list_channels` (incident channels `inc-<date>-<slug>`,
+   feeds `alerts-<cluster>`) + `get_channel_history`, and
+   `x_workload-monitoring_list_alerts` for silence state. Noise rows need no
+   skim ("auto-resolved blips"). Save the rest for drill-down.
 
 ## Drill-down (on request, per incident)
 
