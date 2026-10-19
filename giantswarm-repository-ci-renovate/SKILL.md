@@ -20,12 +20,12 @@ the schema are the `giantswarm-repository-setup` skill; lifecycle, `giantswarm-r
 ## align-files is not Align now
 
 align-files writes the generated files. It runs on every merge of a team file to `main` of
-`giantswarm/github`, nightly, and by hand from its Actions tab; no manager tool runs it. Its changes arrive as a
-pull request in the repository — `chore: align files according to platform standards` from
-`teams-alignment-branch` — which the align-files App merges itself. *Align now* (`align_repository`) is the
-reconciler: settings, protection, CircleCI follow, Renovate, catalog — no files. Asked to "run align-files"
-after a `gen` change, look for that pull request in the repository first: merged after the change, it ran
-and its files are on the default branch; open, it has not landed yet.
+`giantswarm/github`, nightly, and by hand from its Actions tab. Its changes arrive as a pull request in
+the repository — `chore: align files according to platform standards` from `teams-alignment-branch` —
+which the align-files App merges itself. *Align now* (`align_repository`) is the reconciler: settings,
+protection, CircleCI follow, Renovate, catalog — no files. Asked to "run align-files" after a `gen`
+change, look for that pull request in the repository first: merged after the change, it ran and its
+files are on the default branch; open, it has not landed yet.
 
 ## Fetch, in this order
 
