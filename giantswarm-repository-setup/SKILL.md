@@ -2,7 +2,7 @@
 name: giantswarm-repository-setup
 description: Use when asked to create a Giant Swarm repository, to adopt one that exists on GitHub and no team file declares, to declare one or change its configuration in a team file of giantswarm/github, to read or explain a repository's set-up state (which step is red and what fixes it), or to align a repository now — through giantswarm-repo-manager's tools behind Muster, acting as the person. Carries the contract (the declaration is the desired state; validate → dry run → confirm → create, or dry run → confirm → adopt; the two guards on machine approval) and the recipes to fetch the schema and the inventory live, never their contents.
 metadata:
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 # Repository set-up
@@ -48,7 +48,11 @@ do, `giantswarm-repository-ci-renovate`; how `filter_tools`, `describe_tool` and
    run — exactly what `create_repository` would put in the pull request: each entry rendered with the
    schema's defaults, the implied template, whether the name is free on GitHub, and refusals as data in
    `entries[].problems`. Show the person the rendered entry and every problem; fix and validate again
-   until it is clean. An error (not a problem) means validation could not run.
+   until it is clean. An error (not a problem) means validation could not run. The rendered entry is
+   what gets committed, defaults written out: answer "will it build, will it release" from its
+   `gen.ci`, not from your arguments. When the declaration changes shape (another flavour, language or
+   component type), validate the whole entry again and carry every field the person chose forward —
+   `gen.ci` above all; the new shape not needing a field is no reason to drop it.
 3. **Explain the guard notices before the person confirms.** A pull request that only adds valid
    entries, whose author is in the owning team or in `team-planeteers`, and adds **at most three**
    entries is *creation-only*: the machine approves it, it merges in about a minute, and the reconciler
@@ -58,7 +62,8 @@ do, `giantswarm-repository-ci-renovate`; how `filter_tools`, `describe_tool` and
 4. **Confirm, then `create_repository`** with `mode: "commit"` and a `reason` for the pull request body —
    the pull request opens as the person. `dryRun: true` returns the same as `validate_repository`;
    `mode: "apply"` is refused on every write tool: a repository without its declaration is drift.
-5. **Answer with the pull request URL** and what happens next: creation-only merges by itself,
+5. **Answer with the pull request URL** and what happens next — each repository's `firstRelease` says
+   whether v0.1.0 follows on its own; repeat it, never promise more: creation-only merges by itself,
    otherwise the review the notice named; one sentence about the creation follows in the team's standup
    channel (`standupChannel`), with a sentence per failed step or finding of that run. A name that is
    taken (the repository exists, or redirects to a renamed one) is not a creation, and
@@ -67,9 +72,10 @@ do, `giantswarm-repository-ci-renovate`; how `filter_tools`, `describe_tool` and
    merging is not the repository done — that is step 6.
 6. **Follow it to readiness with `watch_repository`** (`describe_tool` for its arguments and answer;
    the pull request number is in `create_repository`'s own answer). Report each phase once as it
-   completes — created, scaffolded, declared, merged, setUp, released — and call the repository ready
-   only when the tool says `ready`; call it again while a phase is still pending. A failed phase names
-   the phase and the reason (a red first release names the job).
+   completes, in the order the tool names them, and call the repository ready only when the tool says
+   `ready`; call it again while a phase is still pending. `withoutRelease` means no release comes on its
+   own — ready once set up, and say so. A failed phase names the phase and the reason (a red first
+   release names the job).
 
 Changing an existing repository's configuration is `update_repository` with the **whole entry** as it
 should read afterwards (not a patch — `get_repository` has the current one), validated against the
@@ -128,11 +134,13 @@ catalog, release — with the last reconciler run. Read a red step in this order
 
   `dryRun: true` answers with the mode, the opt-in, the planned changes from the record's last check and
   a warning paragraph; for `opt-in` also the entry as it will read, the pull request and the ask (who
-  approves, in which channel). Show it to the person before they confirm `mode: "commit"`. The standup
-  channel hears nothing about an Align now itself (an opt-in that merges is a change like any other: the
-  reconciler's own notice follows): the record shows `setup.pendingRun` until the run's result lands as
-  `setup.lastRun` with its failed steps and findings; a run silent for 15 minutes leaves the finding
-  `reconcile-run-missing`.
+  approves, in which channel). The plan is only as fresh as the record: `refresh_repository` first and
+  wait for its answer, never in the same parallel batch as the dry run. Align now generates no files —
+  that is align-files (`giantswarm-repository-ci-renovate`). Show the dry run to the person before they
+  confirm `mode: "commit"`. The standup channel hears nothing about an Align now itself (an opt-in that
+  merges is a change like any other: the reconciler's own notice follows): the record shows
+  `setup.pendingRun` until the run's result lands as `setup.lastRun` with its failed steps and findings;
+  a run silent for 15 minutes leaves the finding `reconcile-run-missing`.
 - **The declaration is wrong**: the fix is a field and lands through `update_repository`. The pipeline is
   derived from `gen.flavours`, `gen.language` and whether a `Dockerfile` sits at the repository root — no
   image job means no root Dockerfile, a chart job on a repository without a chart means the `app` flavour

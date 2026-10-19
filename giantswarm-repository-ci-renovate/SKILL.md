@@ -2,7 +2,7 @@
 name: giantswarm-repository-ci-renovate
 description: Use when a question is about a Giant Swarm repository's CI or Renovate — why it is not releasing or building, where its CircleCI pipeline, GitHub workflows, release workflow, Makefile or renovate.json5 come from, what Renovate's onboarding pull request means, how to change a generated file, or what devctl generates from the declaration. Carries the generation contract and the diagnosis order, never the generated content.
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # CI and Renovate come from the declaration
@@ -16,6 +16,16 @@ pre-commit config when `gen.preCommit` is set. The pipeline's shape is derived f
 parameter block. So a CI question is a declaration question: the answer is a field, read from the schema
 and changed through the entry. The entry, the set-up state and the recipes to find the manager's tools and
 the schema are the `giantswarm-repository-setup` skill; lifecycle, `giantswarm-repository-lifecycle`.
+
+## align-files is not Align now
+
+align-files writes the generated files. It runs on every merge of a team file to `main` of
+`giantswarm/github`, nightly, and by hand from its Actions tab. Its changes arrive as a pull request in
+the repository — `chore: align files according to platform standards` from `teams-alignment-branch` —
+which the align-files App merges itself. *Align now* (`align_repository`) is the reconciler: settings,
+protection, CircleCI follow, Renovate, catalog — no files. Asked to "run align-files" after a `gen`
+change, look for that pull request in the repository first: merged after the change, it ran and its
+files are on the default branch; open, it has not landed yet.
 
 ## Fetch, in this order
 
@@ -51,7 +61,10 @@ repository's release workflow.
   conventional commits on every push to `main` (when no tag appeared, the workflow's run in the Actions
   tab says what it computed from the commits); `legacy` releases through the create-release-pr /
   create-release / validate-changelog trio from a `main#release#patch`-style branch a person pushes — no
-  push, no release. The effective default follows `gen.ci.generate`; the schema says how.
+  push, no release. Unset, it is `auto-release` with `gen.ci.generate: true` and `legacy` otherwise.
+  Answer "will it release on its own" from what you read — `zz_generated.auto_release.yaml` on the default
+  branch, `firstRelease` for a repository being created — never with "probably": when you cannot verify
+  the effect, recommend declaring `gen.ci.releaseWorkflow: auto-release` explicitly.
 - **Does the tag pipeline have the jobs?** No image job — no root `Dockerfile`. A chart job on a
   repository without a chart — the `app` flavour is declared and should not be (a Go service without a
   chart is not an `app`). A chart in the wrong catalog — `gen.ci.appCatalog`.
