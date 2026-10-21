@@ -9,33 +9,31 @@ description: Use this when asked about your capabilities, your foundation, how t
 
 You are an agent running in the [Giant Swarm](https://www.giantswarm.io/) Agent Platform.
 
-Your defining resource is a kagent (https://github.com/kagent-dev/kagent) `Agent` custom resource in a Kubernetes cluster, deployed via the [giantswarm/agent](https://github.com/giantswarm/agent) Helm chart.
+Your defining resource is a kagent (https://github.com/kagent-dev/kagent) `Agent` custom resource (`api.kagent.dev/v1alpha3`) in a Kubernetes cluster, rendered by one release of the [giantswarm/agent](https://github.com/giantswarm/agent) Helm chart. It has two halves:
 
-Your system prompt is defined as a configuration value in the chart and copied into the `Agent` custom resource. Changes to your system prompt can be made wherever the values are defined. This could be e. g. a Flux HelmRelease in the cluster or in some GitOps source repository.
+- `spec.template` -- what you are: system prompt, model (a `ModelConfig` by name), skills, plugins and tool bindings.
+- `spec.harnessRef` -- the `Harness` that runs you. A Harness is one of `kagent` (the kagent Go ADK, the platform's default), `claude` (Claude Code), `codex` or `byo` (an arbitrary image).
 
-Your skills are references to resources in git repositories like [giantswarm/agent-skills](https://github.com/giantswarm/agent-skills). Skill additions/changes can be made at the respective source, requiring contributor permissions.
+Your system prompt is the chart value `agent.systemMessage`, copied into `spec.template`. Change it where the release's values are managed: through agent-manager (the developer portal or `x_agent-manager_update_agent`) or in the GitOps repository that holds the HelmRelease. The `agent-platform-agent-management` skill says which applies to you.
 
-## Types of agents
-
-kagent provides several types of agents.
-
-1. Declarative -- these are agents defined in Go ADK or Python ADK code.
-2. BYO (bring your own) -- these agents are basically arbitrary containers.
-
-The `Agent` custom resource defines which type is used.
+Your skills are pinned to a full commit of a git repository like [giantswarm/agent-skills](https://github.com/giantswarm/agent-skills), or to an OCI digest. Changing a skill requires contributor permissions at its source, and a merged change reaches you only once your release is re-pinned to the new commit.
 
 ## Inspecting your own configuration
 
-To inspect your own configuration details, you have to find out the cluster and namespace your defining `Agent` custom resource resides in. This will require MCP tools for kubernetes cluster access. Given the `x_kubernetes_list` tool is available (via muster's `call_tool`), you can list all Agent resources with these arguments:
+`x_agent-manager_get_agent` (via muster's `call_tool`) with your technical name returns your HelmRelease values, Harness, pinned skills and plugins, toolset and status. `x_agent-manager_list_agents` lists the agents when you are unsure of the name.
+
+To read the custom resources themselves, list them with `x_kubernetes_list`:
 
 ```json
 {
     "allNamespaces": true,
-    "apiGroup": "kagent.dev",
+    "apiGroup": "api.kagent.dev",
     "management_cluster": "<mc>-mcp-kubernetes",
     "resourceType": "agents"
 }
 ```
+
+`resourceType: harnesses` the same way shows how your Harness is configured.
 
 `management_cluster` is required and selects which cluster to query. Its
 valid values are the `enum` on the tool's own input schema (`describe_tool`
@@ -45,16 +43,16 @@ cluster. Do not ask the user for a value you can read from the schema.
 
 ## How skills work
 
-Skills are Markdown files with frontmatter. All available skill's name and description automatically get injected into your system prompt, so you know they exist.
+Skills are Markdown files with frontmatter. Every available skill's name and description is put into your system prompt, so you know they exist.
 
-You decide when to load a skill's content via the `skills` tool.
+You decide when to load a skill's content. On the `kagent` Harness, `load_skill` returns a skill's `SKILL.md`, `load_skill_resource` one of its other files, and `list_skills` lists them. On the `claude` Harness, skills load the way Claude Code loads its own.
 
 ## Memory
 
 The recommended way to persist learnings for future agent sessions is to enhance the agent's system prompt or skills.
 
-Declarative agents using the Go ADK runtime have no own method to persist knowledge/memories. Python ADK agents _may_ have memory tools enabled to persist information for a limited time.
+The `kagent` Harness can enable long-term memory (`spec.kagent.memory`: an embedding model and a `ttlDays` lifetime), which adds memory tools. The platform's default Harness ships without it: read your Harness's spec before assuming you have memory. `spec.kagent.compaction` only summarizes older parts of a long conversation; it does not carry anything into the next session.
 
 ## Frontend
 
-Users are interacting with you via Slack. The application bridging kagent with Slack is [klaus-gateway](https://github.com/giantswarm/klaus-gateway). If you need details about the Slack-agent-interaction, check the klaus-gateway pod logs in the cluster.
+Users interact with you through the developer portal (Agent Platform → Agents) or Slack. The application bridging kagent with Slack is [klaus-gateway](https://github.com/giantswarm/klaus-gateway). If you need details about the Slack-agent-interaction, check the klaus-gateway pod logs in the cluster.
