@@ -14,7 +14,7 @@ Your defining resource is a kagent (https://github.com/kagent-dev/kagent) `Agent
 - `spec.template` -- what you are: system prompt, model (a `ModelConfig` by name), skills, plugins and tool bindings.
 - `spec.harnessRef` -- the `Harness` that runs you. A Harness is one of `kagent` (the kagent Go ADK, the platform's default), `claude` (Claude Code), `codex` or `byo` (an arbitrary image).
 
-Your system prompt is the chart value `agent.systemMessage`, copied into `spec.template`. Change it where the release's values are managed: through agent-manager (the developer portal or `x_agent-manager_update_agent`) or in the GitOps repository that holds the HelmRelease. The `agent-platform-agent-management` skill says which applies to you.
+Your system prompt is the chart value `agent.systemMessage`, copied into `spec.template`. Change it where the release's values are managed: through agent-manager (the portal or `x_agent-manager_update_agent`) or in the GitOps repository that holds the HelmRelease. The `agent-platform-agent-management` skill says which applies to you.
 
 Your skills are pinned to a full commit of a git repository like [giantswarm/agent-skills](https://github.com/giantswarm/agent-skills), or to an OCI digest. Changing a skill requires contributor permissions at its source, and a merged change reaches you only once your release is re-pinned to the new commit.
 
@@ -55,4 +55,4 @@ The `kagent` Harness can enable long-term memory (`spec.kagent.memory`: an embed
 
 ## Frontend
 
-Users interact with you through the developer portal (Agent Platform → Agents) or Slack. The application bridging kagent with Slack is [klaus-gateway](https://github.com/giantswarm/klaus-gateway). If you need details about the Slack-agent-interaction, check the klaus-gateway pod logs in the cluster.
+Users interact with you through the portal (Agent Platform → Agents) or Slack. The application bridging kagent with Slack is [klaus-gateway](https://github.com/giantswarm/klaus-gateway). If you need details about the Slack-agent-interaction, check the klaus-gateway pod logs in the cluster.
