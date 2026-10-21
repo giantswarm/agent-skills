@@ -80,9 +80,9 @@ widens what the person may reach (the `agent-platform-tools` skill has the mecha
 ## How an agent is built and runs
 
 An agent is one Flux `HelmRelease` of the `agent` chart — the unit the `agent-platform-agent-management`
-skill creates and changes, rendered into the runtime's `AgentTemplate`. The platform's `Harness` admits the
-template, boots it once on a worker, materialises the skills and takes a **golden snapshot**; the template
-reports `Ready`. Every conversation is an
+skill creates and changes, rendered into an `Agent` that carries its template inline (`spec.template`) and
+names the `Harness` that runs it (`spec.harnessRef`). The Harness boots it once on a worker, materialises
+the skills and takes a **golden snapshot**; the Agent reports `Ready`. Every conversation is an
 `AgentInstance`: an actor restored from that snapshot onto a worker pod, running the turn in a sandbox,
 sending its tool calls to Muster with the person's forwarded token and the toolset header, checkpointed
 between turns. The transcript lives in the runtime's Postgres, the actor's memory in the snapshot.
@@ -101,8 +101,8 @@ a function of its own; the contract, the name shapes and the `management_cluster
 - **The servers**: `workflow_platform-servers` — every MCP server with its state and tool group.
 - **The models**: `workflow_model-overview` — the `ModelConfig`s and, where model-manager runs, its
   backends, models and capacity.
-- **The runtime's resources**: `x_kubernetes_list` with `apiGroup: kagent.dev` and `resourceType`
-  `agenttemplates`, `remotemcpservers` or `modelconfigs`, in the namespace `x_agent-manager_get_info`
+- **The runtime's resources**: `x_kubernetes_list` with `apiGroup: api.kagent.dev` and `resourceType`
+  `agents`, `harnesses`, `remotemcpservers` or `modelconfigs`, in the namespace `x_agent-manager_get_info`
   reports (it also names the agent chart, the Harness and the skill repositories).
 - **Yourself**: `x_agent-manager_get_agent` with your **technical** name — the release name, not the
   `<name>_<namespace>` the runtime calls you; `x_agent-manager_list_agents` when unsure.
