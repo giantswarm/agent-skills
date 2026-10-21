@@ -102,7 +102,7 @@ a function of its own; the contract, the name shapes and the `management_cluster
 - **The models**: `workflow_model-overview` — the `ModelConfig`s and, where model-manager runs, its
   backends, models and capacity.
 - **The runtime's resources**: `x_kubernetes_list` with `apiGroup: api.kagent.dev` and `resourceType`
-  `agents`, `harnesses`, `remotemcpservers` or `modelconfigs`, in the namespace `x_agent-manager_get_info`
+  `agents`, `agenttemplates`, `harnesses`, `remotemcpservers` or `modelconfigs`, in the namespace `x_agent-manager_get_info`
   reports (it also names the agent chart, the Harness and the skill repositories).
 - **Yourself**: `x_agent-manager_get_agent` with your **technical** name — the release name, not the
   `<name>_<namespace>` the runtime calls you; `x_agent-manager_list_agents` when unsure.
