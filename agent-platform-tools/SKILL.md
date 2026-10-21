@@ -2,7 +2,7 @@
 name: agent-platform-tools
 description: Use when a question is about how tools work on the Giant Swarm Agent Platform — how Muster's meta-tools and call_tool work, how to find or run any tool, what a toolset or preset resolves to for the caller, why a tool is missing or a call was refused, MCP servers and their state, workflows and why they are cheaper, or what model-manager can do. Carries the mechanics and the fetch recipes, never a list of tools, presets or servers — those are read live.
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Tools on the Agent Platform
@@ -125,6 +125,11 @@ installation: https://docs.giantswarm.io/tutorials/agent-platform/bring-your-own
   toolset. Change the agent (`agent-platform-agent-management`), not the call.
 - `forbidden` or `Unauthorized` from a backend is the **person's** authorization (RBAC on that cluster,
   the service's account); no toolset change affects it.
+- `Unauthorized` from muster itself — `sending "tools/call": Unauthorized`, or `calling "initialize": …
+  Unauthorized` on the reconnect — is the turn's own credential: the person's token that came with their
+  message ran out while the turn was still working. Nothing inside the turn renews it, and
+  `core_auth_login` fails the same way. Stop, say what is done and what is not, and ask the person to send
+  a message to continue: the next one carries a fresh token. It is not a backend sign-in.
 - A server in `Auth Required` whose tools you cannot see: sign in — `core_auth_login` for that server,
   the portal's Servers page, or `muster auth login` on the CLI (`muster auth status` shows the state).
   Repeated re-authentication prompts point at an expired session or an audience mismatch on that

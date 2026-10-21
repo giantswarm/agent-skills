@@ -2,7 +2,7 @@
 name: giantswarm-repository-setup
 description: Use when asked to create a Giant Swarm repository, to adopt one that exists on GitHub and no team file declares, to declare one or change its configuration in a team file of giantswarm/github, to read or explain a repository's set-up state (which step is red and what fixes it), or to align a repository now — through giantswarm-repo-manager's tools behind Muster, acting as the person. Carries the contract (the declaration is the desired state; validate → dry run → confirm → create, or dry run → confirm → adopt; the two guards on machine approval) and the recipes to fetch the schema and the inventory live, never their contents.
 metadata:
-  version: "1.6.0"
+  version: "1.6.1"
 ---
 
 # Repository set-up
@@ -74,7 +74,9 @@ do, `giantswarm-repository-ci-renovate`; how `filter_tools`, `describe_tool` and
    the pull request number is in `create_repository`'s own answer). Report each phase once as it
    completes, in the order the tool names them, and call the repository ready only when the tool says
    `ready`; call it again while a phase is still pending. `withoutRelease` means no release comes on its
-   own — ready once set up, and say so. A failed phase names the phase and the reason (a red first
+   own — ready once set up, and say so. A long watch can outlive the person's credential for the turn:
+   `Unauthorized` from muster itself means report the phases so far and ask them to send a message to
+   continue the watch, not to sign in anywhere. A failed phase names the phase and the reason (a red first
    release names the job).
 
 Changing an existing repository's configuration is `update_repository` with the **whole entry** as it
