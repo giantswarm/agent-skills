@@ -16,11 +16,11 @@ what a pin is are the `agent-platform-skill-authoring` skill. The one reference 
 ## The agent unit
 
 One agent is one Flux `HelmRelease` of the `agent` chart in the `kagent` namespace. helm-controller
-renders an `AgentTemplate` (prompt, model config, pinned skills, tool bindings, compaction) and, for
-a tooled agent, a `RemoteMCPServer` named after the agent that points at Muster with the agent's
-toolset. The platform's `Harness` admits the template, compiles the golden snapshot and reports
-`Ready`. Any change is a new revision: running sessions keep their actor, new sessions start from
-the new one.
+renders an `Agent` — its template inline (prompt, model config, pinned skills and plugins, tool
+bindings) and the `Harness` that runs it by name — and, for a tooled agent, a `RemoteMCPServer` named
+after the agent that points at Muster with the agent's toolset. The Harness compiles the golden
+snapshot and the Agent reports `Ready`. Any change is a new revision: running sessions keep their
+actor, new sessions start from the new one.
 
 Where the reference lives — fetch it, never quote it from memory:
 
@@ -29,9 +29,10 @@ Where the reference lives — fetch it, never quote it from memory:
 - The values schema and the manifests a set of values renders: `x_agent-manager_validate_agent`
   with the intended values returns the composed `HelmRelease` (and `OCIRepository`) and every
   violation, writing nothing. It is also how a GitOps `HelmRelease` is drafted: validate, copy.
-- The CRDs and the live objects: `x_kubernetes_api_resources` for the `kagent.dev` group, then
-  `x_kubernetes_get` of `agenttemplates`, `remotemcpservers`, `modelconfigs` in `kagent` and of
-  `helmreleases` for the releases. The template's `status.harnesses[]` carries the conditions.
+- The CRDs and the live objects: `x_kubernetes_api_resources` for the `api.kagent.dev` group, then
+  `x_kubernetes_get` of `agents`, `harnesses`, `remotemcpservers`, `modelconfigs` in `kagent` and of
+  `helmreleases` for the releases; `agenttemplates` when an Agent names one in `spec.templateRef`
+  instead of carrying its template inline. The conditions are in the Agent's `status.conditions`.
 
 ## Three doors, two ways to change
 
@@ -39,7 +40,7 @@ The portal's create flow, agent-manager's tools and a GitOps repository write th
 `workflow_agent-roster` shows every agent with its management mode: `helmrelease` is written live
 through agent-manager; `gitops` is applied by Flux and changes through a **pull request** — a live
 write is refused, and a `force`d one is reverted at the next reconcile with a misleading audit
-trail; `none` is a bare template without a release. Where the pull request goes: the release's
+trail; `none` is a bare Agent without a release. Where the pull request goes: the release's
 `kustomize.toolkit.fluxcd.io/name` and `/namespace` labels name the Flux `Kustomization` that
 applies it, and its `sourceRef` is the repository. The portal shows the Git source on such agents.
 
@@ -62,7 +63,7 @@ head. A GitOps agent re-pins through a commit that changes the pinned commit.
 ## The rules the tools do not tell you
 
 - **Technical name**: DNS-1123, at most 63 characters, chosen by the person, never derived from the
-  display name in silence. It names the release, the template, the `RemoteMCPServer` and the
+  display name in silence. It names the release, the Agent, the `RemoteMCPServer` and the
   avatar. The display name and the description are what the roster, Slack and the portal show.
 - **Model config**: one from the live list, never invented — an agent on a missing or not-accepted
   config never boots.
@@ -81,11 +82,12 @@ head. A GitOps agent re-pins through a commit that changes the pinned commit.
 ## Status and troubleshooting
 
 `workflow_agent-status` (`name`, `namespace` = `kagent`) is the one call: the verdict — `ready`,
-`progressing`, `failed`, `not_found` — with the template's harness conditions (`Accepted`,
-`ResolvedRefs`, `Compatible`, `Ready`), the release's condition and the golden-worker log lines that
-name the agent. `progressing` for about a minute after a write is normal. The failure that hides is
-`Ready=False ActorTemplatePending` for more than a few minutes: the Harness retries the golden boot
-every minute without bound, and the cause — a skill fetch that fails, a Secret that is missing — is
-only in those log lines. Name the one follow-up the workflow allows, do it, call the workflow again,
+`progressing`, `failed`, `not_found` — with a summary, the release's condition and the golden-worker
+log lines that name the agent. The Agent's own conditions (`Accepted`, `ResolvedRefs`, `Compatible`,
+`Ready`) are in its `status.conditions`. `progressing` for about a minute after a write is normal.
+The failure that hides is `Ready=False ActorTemplatePending` that does not clear: the Harness retries
+a failing golden boot a few times with growing backoff, then gives up with `Ready=False
+ActorTemplateFailed`, and the cause — a skill fetch that fails, a Secret that is missing — is only
+in those log lines. Name the one follow-up the workflow allows, do it, call the workflow again,
 and stop when it says `ready`. For the whole namespace, `workflow_agent-roster`. Beyond the
 workflows the live objects above are the evidence; the portal shows the same conditions verbatim.

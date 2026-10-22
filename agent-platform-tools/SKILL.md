@@ -113,7 +113,7 @@ search, a fit check and node capacity. Its tools appear as `x_model-manager_*`:
 An **empty result** means model-manager is not deployed on this installation (off by default in the
 platform chart; it needs a serving backend) or you are not signed in to it. Model configs then come from
 `workflow_model-overview`, `x_agent-manager_list_model_configs`, or the `ModelConfig` resources
-(`kagent.dev/v1alpha3`) in the runtime's namespace via `x_kubernetes_list`. Bringing a model to an
+(`api.kagent.dev/v1alpha3`) in the runtime's namespace via `x_kubernetes_list`. Bringing a model to an
 installation: https://docs.giantswarm.io/tutorials/agent-platform/bring-your-own-model/.
 
 ## When a tool is missing or refused — the live checks
