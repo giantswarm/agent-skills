@@ -1,8 +1,8 @@
 ---
 name: agent-platform-agent-management
-description: Use when asked to create, change, inspect, troubleshoot, re-pin the skills of or delete an agent on the Giant Swarm Agent Platform — through agent-manager's tools (x_agent-manager_* via call_tool), the developer portal's create flow, or a GitOps HelmRelease of the agent chart. Covers the agent unit on the cluster and where its live reference is, which agents get a pull request instead of a live write, the working shape from validate to ready, the rules for the technical name, model config, toolset, skills and system prompt, and the status verdict with its one follow-up.
+description: Use when asked to create, change, inspect, troubleshoot, re-pin the skills of or delete an agent, or to evaluate one of its sessions, on the Giant Swarm Agent Platform — through agent-manager's tools (x_agent-manager_* via call_tool), the developer portal's create flow, or a GitOps HelmRelease of the agent chart. Covers the agent unit on the cluster and where its live reference is, which agents get a pull request instead of a live write, the working shape from validate to ready, the rules for the technical name, model config, toolset, skills and system prompt, the status verdict with its one follow-up, and reading a whole session for an evaluation.
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Managing agents
@@ -91,3 +91,23 @@ ActorTemplateFailed`, and the cause — a skill fetch that fails, a Secret that 
 in those log lines. Name the one follow-up the workflow allows, do it, call the workflow again,
 and stop when it says `ready`. For the whole namespace, `workflow_agent-roster`. Beyond the
 workflows the live objects above are the evidence; the portal shows the same conditions verbatim.
+
+## Evaluating a session
+
+Why an agent went in circles, guessed arguments or gave up is in its session, and the fix is a
+change to its prompt, skills or toolset. agent-manager reads a session as the person: only its
+owner can, and the id comes from `x_agent-manager_list_sessions`. Read the arguments of
+`x_agent-manager_get_session` and `x_agent-manager_get_session_turn` with `describe_tool` first.
+
+- **In your own context**: `get_session` in the default `summary` to find the turns that matter,
+  then `get_session_turn` for one turn, or with `toolCall` for one call's arguments and full
+  response.
+- **The whole session, for an evaluation**: `get_session` with `detail: full` and a `maxBytes` up
+  to the range's maximum answers the session and every task verbatim. That is far more than a
+  context window holds: write it to a file, for example
+  `muster call x_agent-manager_get_session --json '{"sessionId": "…", "detail": "full", "maxBytes": …}' --output json > session.json`
+  after a one-time `muster auth login`. Every turn is read with its own call, so a long session
+  takes a while. `truncated` or `omittedTurns` in the answer means it is not whole; a maximum of
+  1048576 is an older agent-manager, which answers at most 1 MiB and 200 turns.
+- The answer is everything the agent saw, unredacted: customer data. Keep it out of chats,
+  tickets and pull requests.
