@@ -51,13 +51,13 @@ it to the pull request or issue being worked on with gh's `--attach` (`gh pr cre
 replacing a local path the body already names:
 
 ```bash
-gh pr comment 42 --attach './login.png#The login error state'
+gh pr comment 42 --attach '/tmp/login.png#The login error state'
 ```
 
-- PNG, JPEG, GIF, WebP or SVG up to 10 MB; at most 50 files per command; github.com only.
+- The file types, sizes and counts gh takes come from `gh pr comment --help`.
 - An upload cannot be undone: attach only what the person should see.
-- gh refuses an App installation token (`ghs_…`); then keep the screenshot to the session and
-  describe it.
+- No `--attach` in `gh pr comment --help` (an older gh), or gh refusing the token (an App
+  installation token, `ghs_…`): keep the screenshot to the session and describe it.
 - Write screenshots outside the repository (`/tmp`) so they are never committed.
 
 ## The repository's own Playwright suite
@@ -69,13 +69,15 @@ Install the repository's dependencies as its CI does (`npm ci`, `pnpm install --
 sh <this skill's directory>/scripts/playwright-test.sh [-c <playwright.config.*>] [<playwright test args>...]
 ```
 
-The script writes `playwright.platform.config.ts` beside the repository's configuration and hides
-it in `.git/info/exclude`, so no tracked file changes: it extends the repository's configuration,
-launches the toolchain's Chromium headless on the Chromium projects (their other launch options
-kept), and leaves the other projects (Firefox, WebKit) out of the run, saying which. Arguments after
-it go to `playwright test` (`--project`, `--grep`, a test file, `--reporter`). It refuses a
-repository whose Playwright expects a Chromium more than one major version newer than the
-toolchain's, naming both; report that instead of changing the repository's Playwright pin.
+The suite runs in the configuration's directory, as `playwright test` there would; paths in the
+arguments are relative to it. For the run, the script writes `.playwright.platform-<pid>.config.*`
+beside the repository's configuration, hidden in `.git/info/exclude` and removed afterwards, so no
+file of the repository changes: it extends the repository's configuration, launches the toolchain's
+Chromium headless on the Chromium projects (their other launch options kept), and leaves the other
+projects (Firefox, WebKit) out of the run, saying which. A non-Chromium project a Chromium project
+depends on fails the run, named. Arguments go to `playwright test` (`--project`, `--grep`, a test
+file, `--reporter`). It refuses a repository whose Playwright expects a Chromium more than one
+major version newer than the toolchain's, naming both, and warns about a much older one; report
+that instead of changing the repository's Playwright pin.
 
-Never add an `executablePath` or a platform path to the repository's tracked configuration, and
-never commit `playwright.platform.config.ts`.
+Never add an `executablePath` or a platform path to the repository's tracked configuration.

@@ -58,5 +58,7 @@ into the skill.
 |---|---|
 | `playwright-browser` | A headless browser in the agent's actor, from the `node` toolchain: the Playwright CLI against a page on `localhost` or a declared origin, screenshots read and attached with `gh … --attach`, and the repository's own `playwright test` through an untracked override configuration (`scripts/playwright-test.sh`); what the browser cannot reach |
 
+## Other skills
+
 The remaining directories are demo and domain skills (`incident-response`, `k8s-debugging`,
 `postmortems`, `agent-self-awareness`, and the fictional customers' data skills).
