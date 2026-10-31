@@ -2,7 +2,7 @@
 name: agent-platform-skill-authoring
 description: Use when asked to write, review, fix or explain a skill for an agent on the Giant Swarm Agent Platform — the SKILL.md frontmatter (agentskills.io fields), the folder layout, how the runtime loads a skill (load_skill, load_skill_resource, /skills), what a pin is and why a new commit changes nothing until an agent is re-pinned, the writing rules (fetch live, never copy; one topic; short), what in a skill breaks an agent's boot, and how to review one.
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Authoring skills
@@ -37,6 +37,9 @@ metadata:
 - **Body**: what the model would get wrong without it. Well under 150 lines.
 - **Folders**: `references/` (read on demand), `scripts/` (run with the runtime's `bash`) and
   `assets/` (templates, data) are the convention; any layout under the skill directory works.
+- **Tags**: `metadata.tags: "kubernetes, incident-response"` — one comma-separated string, since
+  `metadata` values are strings. Choose them from the platform's vocabulary and confirm them with the
+  person: the `agent-platform-overview` skill's Tags section.
 
 ## How the runtime loads a skill
 
