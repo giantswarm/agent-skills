@@ -2,7 +2,7 @@
 name: agent-platform-agent-management
 description: Use when asked to create, change, inspect, troubleshoot, re-pin the skills of or delete an agent, or to evaluate one of its sessions, on the Giant Swarm Agent Platform — through agent-manager's tools (x_agent-manager_* via call_tool), the developer portal's create flow, or a GitOps HelmRelease of the agent chart. Covers the agent unit on the cluster and where its live reference is, which agents get a pull request instead of a live write, the working shape from validate to ready, the rules for the technical name, model config, toolset, skills and system prompt, the status verdict with its one follow-up, and reading a whole session for an evaluation.
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 # Managing agents
@@ -75,6 +75,8 @@ head. A GitOps agent re-pins through a commit that changes the pinned commit.
   carries the meta-tool paragraph from `references/system-prompt.md`.
 - **Icon**: `iconUrl` is `https://avatars.<base domain>/v1/<name>.png` where the installation
   serves avatars; the portal shows it.
+- **Tags**: 1–5 on every new agent, reused from the platform's vocabulary — the recipe and format are
+  the `agent-platform-overview` skill's Tags section.
 - **Confirm every choice you made for the person** — the technical name above all — before
   writing. Delete only on an explicit request that names the agent, one at a time. Never `force` a
   write onto a GitOps release.
