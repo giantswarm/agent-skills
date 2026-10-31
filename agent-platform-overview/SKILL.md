@@ -126,6 +126,9 @@ what an item does.
   `core_mcpserver_*`/`core_workflow_*` create and update — on update the list replaces the old one;
   in a skill, the frontmatter `metadata.tags: "a, b"` (one comma-separated string). On the cluster they
   are the annotation `ui.giantswarm.io/tags`, comma-joined.
+- **Retagging a workflow**: `core_workflow_update` replaces the whole spec and requires `steps`, so
+  `core_workflow_get` it first and resend description, args and steps with the new `tags` — anything
+  omitted is cleared; only an omitted `tags` keeps its value.
 
 ## Facts to keep straight
 
