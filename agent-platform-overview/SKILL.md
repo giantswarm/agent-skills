@@ -113,6 +113,10 @@ Agents, skills, connectors (Muster's `MCPServer`s) and workflows share one free-
 the portal filters and suggests from it. Tag everything you create, and re-check tags when you change
 what an item does.
 
+- **Check the tools take tags**: `x_agent-manager_get_info` reports `capabilities.tags: true`, and
+  `describe_tool` on `core_mcpserver_create` and `core_workflow_create` lists a `tags` argument. Where
+  one does not, leave tags out for that type and tell the person: agent-manager drops an unknown
+  argument without a word, Muster refuses the whole call.
 - **Collect the vocabulary first**, across all four types: `x_agent-manager_list_agents`,
   `x_agent-manager_list_skills`, `core_mcpserver_list` and `core_workflow_list` all return each item's
   `tags`. Count how often each tag is used.
@@ -127,8 +131,10 @@ what an item does.
   in a skill, the frontmatter `metadata.tags: "a, b"` (one comma-separated string). On the cluster they
   are the annotation `ui.giantswarm.io/tags`, comma-joined.
 - **Retagging a workflow**: `core_workflow_update` replaces the whole spec and requires `steps`, so
-  `core_workflow_get` it first and resend description, args and steps with the new `tags` — anything
-  omitted is cleared; only an omitted `tags` keeps its value.
+  `core_workflow_get` it first and resend `description`, `args`, `steps`, `onFailure` and `output` with
+  the new `tags` — anything omitted is cleared; only an omitted `tags` keeps its value.
+- **GitOps-owned connectors and workflows** take their tags in the manifest, through a pull request;
+  Flux reverts a live edit of what the manifest declares.
 
 ## Facts to keep straight
 
