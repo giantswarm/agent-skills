@@ -17,6 +17,11 @@ KNOWN_FIELDS = {"name", "description", "license", "compatibility", "metadata", "
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 MAX_NAME = 64
 MAX_DESCRIPTION = 1024
+# metadata.tags: the same rules the agent chart and muster enforce on the ui.giantswarm.io/tags
+# annotation, so a skill's tags pass wherever the portal or an agent writes them.
+TAG_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+MAX_TAG = 63
+MAX_TAGS = 50
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
@@ -32,6 +37,23 @@ def frontmatter(text: str):
     if not isinstance(data, dict):
         raise ValueError("frontmatter is not a YAML mapping")
     return data
+
+
+def check_tags(value: str):
+    """Problems with a comma-joined metadata.tags string; a missing or empty one is valid."""
+    tags = [t.strip() for t in value.split(",") if t.strip()]
+    problems = []
+    for tag in tags:
+        if len(tag) > MAX_TAG:
+            problems.append(f"tag {tag!r} is {len(tag)} characters, the limit is {MAX_TAG}")
+        if not TAG_RE.match(tag):
+            problems.append(f"tag {tag!r} must be lowercase letters and digits in hyphen-separated words")
+    duplicates = sorted({t for t in tags if tags.count(t) > 1})
+    if duplicates:
+        problems.append(f"duplicate tag(s) {duplicates}")
+    if len(tags) > MAX_TAGS:
+        problems.append(f"{len(tags)} tags, the limit is {MAX_TAGS}")
+    return problems
 
 
 def check_skill(directory: pathlib.Path):
@@ -68,6 +90,8 @@ def check_skill(directory: pathlib.Path):
         not isinstance(metadata, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in metadata.items())
     ):
         problems.append(f"{skill_md}: 'metadata' must be a mapping of strings to strings")
+    elif metadata is not None and "tags" in metadata:
+        problems.extend(f"{skill_md}: metadata.tags: {p}" for p in check_tags(metadata["tags"]))
     return problems
 
 

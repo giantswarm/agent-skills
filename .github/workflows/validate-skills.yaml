@@ -17,3 +17,4 @@ jobs:
           python-version: "3.15"
       - run: pip install pyyaml
       - run: python3 scripts/validate_skills.py
+      - run: python3 -m unittest discover -s scripts

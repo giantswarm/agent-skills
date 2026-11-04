@@ -2,7 +2,7 @@
 name: agent-platform-tools
 description: Use when a question is about how tools work on the Giant Swarm Agent Platform — how Muster's meta-tools and call_tool work, how to find or run any tool, what a toolset or preset resolves to for the caller, why a tool is missing or a call was refused, MCP servers and their state, workflows and why they are cheaper, or what model-manager can do. Carries the mechanics and the fetch recipes, never a list of tools, presets or servers — those are read live.
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 # Tools on the Agent Platform
@@ -101,6 +101,9 @@ model-manager's backends and capacity), `workflow_platform-servers` (MCP servers
 are all read-only is read-only itself and part of the built-in read-only preset. Authoring:
 https://docs.giantswarm.io/tutorials/agent-platform/authoring-workflows/ and
 https://docs.giantswarm.io/tutorials/agent-platform/saving-tokens-with-workflows/.
+
+Creating or changing a connector (`core_mcpserver_*`) or a workflow (`core_workflow_*`): set its `tags`,
+chosen as the `agent-platform-overview` skill's Tags section says.
 
 ## model-manager
 

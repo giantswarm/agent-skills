@@ -1,8 +1,8 @@
 ---
 name: agent-platform-overview
-description: Use when someone asks what the Giant Swarm Agent Platform is, how it is built or how it works — its components, the three groups of MCP servers, how people reach agents (portal, Slack, IDE, CLI), how identity flows, how an agent runs, how to look at the live platform, or how you yourself run on it. Not for discovering tools and toolsets (agent-platform-tools), creating or changing agents (agent-platform-agent-management) or writing skills (agent-platform-skill-authoring).
+description: Use when someone asks what the Giant Swarm Agent Platform is, how it is built or how it works — its components, the three groups of MCP servers, how people reach agents (portal, Slack, IDE, CLI), how identity flows, how an agent runs, how to look at the live platform, how you yourself run on it, or which tags to give an agent, skill, connector or workflow. Not for discovering tools and toolsets (agent-platform-tools), creating or changing agents (agent-platform-agent-management) or writing skills (agent-platform-skill-authoring).
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # The Giant Swarm Agent Platform
@@ -106,6 +106,35 @@ a function of its own; the contract, the name shapes and the `management_cluster
   reports (it also names the agent chart, the Harness and the skill repositories).
 - **Yourself**: `x_agent-manager_get_agent` with your **technical** name — the release name, not the
   `<name>_<namespace>` the runtime calls you; `x_agent-manager_list_agents` when unsure.
+
+## Tags
+
+Agents, skills, connectors (Muster's `MCPServer`s) and workflows share one free-form tag vocabulary;
+the portal filters and suggests from it. Tag everything you create, and re-check tags when you change
+what an item does.
+
+- **Check the tools take tags**: `x_agent-manager_get_info` reports `capabilities.tags: true`, and
+  `describe_tool` on `core_mcpserver_create` and `core_workflow_create` lists a `tags` argument. Where
+  one does not, leave tags out for that type and tell the person: agent-manager drops an unknown
+  argument without a word, Muster refuses the whole call.
+- **Collect the vocabulary first**, across all four types: `x_agent-manager_list_agents`,
+  `x_agent-manager_list_skills`, `core_mcpserver_list` and `core_workflow_list` all return each item's
+  `tags`. Count how often each tag is used.
+- **Propose 1–5 tags**, existing ones first — the most used fitting tag beats a near-synonym (`ci`, not
+  `ci-cd`, when `ci` exists). Coin a new tag only when none fits.
+- **Format**: lowercase letters and digits in hyphen-separated words (`^[a-z0-9]+(-[a-z0-9]+)*$`), at
+  most 63 characters, unique, at most 50 per item. A tag is a category (`kubernetes`, `incident-response`),
+  never the item's own name.
+- **Confirm them with the person** like every other choice, marking which ones are new.
+- **Where they go**: `tags` (a list) on `x_agent-manager_create_agent`/`_update_agent` and on
+  `core_mcpserver_*`/`core_workflow_*` create and update — on update the list replaces the old one;
+  in a skill, the frontmatter `metadata.tags: "a, b"` (one comma-separated string). On the cluster they
+  are the annotation `ui.giantswarm.io/tags`, comma-joined.
+- **Retagging a workflow**: `core_workflow_update` replaces the whole spec and requires `steps`, so
+  `core_workflow_get` it first and resend `description`, `args`, `steps`, `onFailure` and `output` with
+  the new `tags` — anything omitted is cleared; only an omitted `tags` keeps its value.
+- **GitOps-owned connectors and workflows** take their tags in the manifest, through a pull request;
+  Flux reverts a live edit of what the manifest declares.
 
 ## Facts to keep straight
 
