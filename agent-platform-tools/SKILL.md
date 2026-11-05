@@ -2,7 +2,7 @@
 name: agent-platform-tools
 description: Use when a question is about how tools work on the Giant Swarm Agent Platform — how Muster's meta-tools and call_tool work, how to find or run any tool, what a toolset or preset resolves to for the caller, why a tool is missing or a call was refused, MCP servers and their state, workflows and why they are cheaper, or what model-manager can do. Carries the mechanics and the fetch recipes, never a list of tools, presets or servers — those are read live.
 metadata:
-  version: "2.2.0"
+  version: "2.2.1"
 ---
 
 # Tools on the Agent Platform
@@ -133,8 +133,13 @@ installation: https://docs.giantswarm.io/tutorials/agent-platform/bring-your-own
   message ran out while the turn was still working. Nothing inside the turn renews it, and
   `core_auth_login` fails the same way. Stop, say what is done and what is not, and ask the person to send
   a message to continue: the next one carries a fresh token. It is not a backend sign-in.
-- A server in `Auth Required` whose tools you cannot see: sign in — `core_auth_login` for that server,
-  the portal's Servers page, or `muster auth login` on the CLI (`muster auth status` shows the state).
+- A server in `Auth Required` whose tools you cannot see: call `core_auth_login` for that server from
+  this conversation and give the person the sign-in link it returns. A sign-in elsewhere (the Dev
+  Portal's Customize → Connectors, `muster auth login` on the CLI) reaches this conversation only for a
+  connector with `grantScope: subject` (`core_mcpserver_get`: `spec.auth.grantScope` or
+  `spec.auth.authorizationServer.grantScope`). An own-account (OAuth) connector without it signs in per
+  session: the portal shows it as "Portal only", and every agent conversation needs its own sign-in.
+  Never send the person to the portal for such a connector.
   Repeated re-authentication prompts point at an expired session or an audience mismatch on that
   server's `MCPServer` resource.
 - "tool `x_…` not found" from the runtime: a backend tool was emitted as a function — go through `call_tool`.
