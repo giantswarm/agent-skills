@@ -2,7 +2,7 @@
 name: agent-platform-agent-management
 description: Use when asked to create, change, inspect, troubleshoot, re-pin the skills of or delete an agent, or to evaluate one of its sessions, on the Giant Swarm Agent Platform — through agent-manager's tools (x_agent-manager_* via call_tool), the developer portal's create flow, or a GitOps HelmRelease of the agent chart. Covers the agent unit on the cluster and where its live reference is, which agents get a pull request instead of a live write, the working shape from validate to ready, the rules for the technical name, model config, toolset, skills and system prompt, the status verdict with its one follow-up, and reading a whole session for an evaluation.
 metadata:
-  version: "2.2.0"
+  version: "2.2.1"
 ---
 
 # Managing agents
@@ -43,6 +43,16 @@ write is refused, and a `force`d one is reverted at the next reconcile with a mi
 trail; `none` is a bare Agent without a release. Where the pull request goes: the release's
 `kustomize.toolkit.fluxcd.io/name` and `/namespace` labels name the Flux `Kustomization` that
 applies it, and its `sourceRef` is the repository. The portal shows the Git source on such agents.
+
+`managed: unknown` with `releaseWithheld` is a successful partial read: the caller may read the
+Agent but not its Flux release. It does not mean unmanaged or unhealthy. Report the Agent's
+readiness and explain the missing release details using `releaseWithheld`, including the required
+role when it names one. The portal omits deployment details the person cannot read and keeps the
+Agent's readiness visible, without a permission notice. A Forbidden response is a limit of the
+platform's access model; explain it
+without blaming the person's RBAC or guessing a role. Use the existing roster or status workflow
+for the information the person may read, and do not retry a refused release read through raw
+Kubernetes tools.
 
 ## Working with agent-manager
 
