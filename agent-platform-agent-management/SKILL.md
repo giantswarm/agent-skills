@@ -47,8 +47,9 @@ applies it, and its `sourceRef` is the repository. The portal shows the Git sour
 `managed: unknown` with `releaseWithheld` is a successful partial read: the caller may read the
 Agent but not its Flux release. It does not mean unmanaged or unhealthy. Report the Agent's
 readiness and explain the missing release details using `releaseWithheld`, including the required
-role when it names one. The portal shows that explanation under Technical details, in place of
-the release details. A Forbidden response is a limit of the platform's access model; explain it
+role when it names one. The portal omits deployment details the person cannot read and keeps the
+Agent's readiness visible, without a permission notice. A Forbidden response is a limit of the
+platform's access model; explain it
 without blaming the person's RBAC or guessing a role. Use the existing roster or status workflow
 for the information the person may read, and do not retry a refused release read through raw
 Kubernetes tools.
