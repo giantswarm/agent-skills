@@ -2,7 +2,7 @@
 name: agent-platform-tools
 description: Use when a question is about how tools work on the Giant Swarm Agent Platform — how Muster's meta-tools and call_tool work, how to find or run any tool, what a toolset or preset resolves to for the caller, why a tool is missing or a call was refused, MCP servers and their state, workflows and why they are cheaper, or what model-manager can do. Carries the mechanics and the fetch recipes, never a list of tools, presets or servers — those are read live.
 metadata:
-  version: "2.2.1"
+  version: "2.2.2"
 ---
 
 # Tools on the Agent Platform
@@ -126,8 +126,10 @@ installation: https://docs.giantswarm.io/tutorials/agent-platform/bring-your-own
   preset); `presets` shows whether a named preset exists at all.
 - An error **naming the toolset** on `call_tool` is composition — the tool is outside the agent's
   toolset. Change the agent (`agent-platform-agent-management`), not the call.
-- `forbidden` or `Unauthorized` from a backend is the **person's** authorization (RBAC on that cluster,
-  the service's account); no toolset change affects it.
+- `forbidden` or `Unauthorized` from a backend concerns its authorization; a toolset change cannot
+  grant backend permissions. A successful agent-manager read with `releaseWithheld` is a partial
+  answer, not an error: use the readable Agent data and explain which release details are unavailable.
+  Do not send an authenticated person through sign-in again or blame them for this platform limit.
 - `Unauthorized` from muster itself — `sending "tools/call": Unauthorized`, or `calling "initialize": …
   Unauthorized` on the reconnect — is the turn's own credential: the person's token that came with their
   message ran out while the turn was still working. Nothing inside the turn renews it, and
