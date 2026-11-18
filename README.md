@@ -60,5 +60,5 @@ into the skill.
 
 ## Other skills
 
-The remaining directories are demo and domain skills (`incident-response`, `k8s-debugging`,
+The remaining directories are demo and domain skills (`incident-response`, `incident-triage`, `k8s-debugging`,
 `postmortems`, `agent-self-awareness`, and the fictional customers' data skills).
