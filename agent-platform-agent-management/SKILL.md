@@ -68,12 +68,11 @@ each skill's description — a skill you assign is judged from that listing, nev
 `x_agent-manager_create_agent` → `workflow_agent-status` until `ready` (about a minute; the golden
 snapshot is the long part) → a first turn as the person → `x_agent-manager_update_agent` for
 follow-ups. `x_agent-manager_update_agent` replaces `skills` and `toolset` as whole lists; `refreshSkills: true` re-pins every git skill to its default-branch
-head. Where `x_agent-manager_update_agent_access` exists (tool approval per agent), `update_agent`
-takes only the descriptive fields (name, description, prompt, model, tags, icon, labels,
-annotations) and refuses the rest by name: the tool list (`tools`, `toolset`), skills, plugins,
-egress, connectors, Harness, toolchains and `refreshSkills` go to `update_agent_access`, and the
-list's Allow/Ask/Block settings and `default` to `x_agent-manager_set_agent_approval`. Arguments are
-exact and case-sensitive; `get_agent` reports the list as `toolSettings`. A GitOps agent re-pins through a commit that changes the pinned commit.
+head. Where `x_agent-manager_update_agent_access` exists (per-agent tool approval), `update_agent`
+takes only name, description, prompt, model, tags, icon, labels and annotations and refuses the rest
+by name: the tool list, skills, plugins, egress, connectors, Harness, toolchains and `refreshSkills`
+go to `update_agent_access`, the list's Allow/Ask/Block settings and `default` to
+`x_agent-manager_set_agent_approval`. `get_agent` reports the list as `toolSettings`. A GitOps agent re-pins through a commit that changes the pinned commit.
 
 ## The rules the tools do not tell you
 
